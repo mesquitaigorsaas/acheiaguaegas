@@ -1,0 +1,13 @@
+{
+    "version": "0.0.1",
+    "configurations": [
+        {
+            "name": "aguaegas",
+            "runtimeExecutable": "node",
+            "runtimeArgs": [
+                ".claude/serve.js"
+            ],
+            "port": 4620
+        }
+    ]
+}

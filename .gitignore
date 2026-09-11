@@ -1,0 +1,8 @@
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/
+
+# Cópia montada na hora de publicar. Sai inteira do que já está versionado.
+dist/
