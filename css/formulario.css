@@ -1,0 +1,143 @@
+/* ==========================================
+   ACHEI ÁGUA & GÁS — O CADASTRO DA REVENDA
+
+   Quem preenche isto é o dono da revenda, muitas vezes no balcão, no
+   celular, entre um cliente e outro. Então: campo grande, rótulo
+   claro, e cada grupo separado por um título que diz o que vem ali.
+
+   Uma tela longa e bem dividida cansa menos que cinco telas curtas,
+   porque a pessoa vê o fim desde o começo e sabe quanto falta.
+   ========================================== */
+
+#form-cadastro > h2,
+#bloco-pronto > h2 {
+    font-family: var(--titulo);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--marinho);
+    margin-bottom: 4px;
+}
+
+.grupo {
+    border: none;
+    border-top: 1px solid var(--linha);
+    margin: 24px 0 0;
+    padding: 18px 0 0;
+}
+
+.grupo legend {
+    padding: 0;
+    font-family: var(--titulo);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--agua-escura);
+    letter-spacing: .01em;
+}
+
+.explica-grupo {
+    margin: 6px 0 16px;
+    font-size: 14px;
+    color: var(--tinta-fraca);
+}
+
+
+/* Campos lado a lado -------------------------------------- */
+
+.linha-campos {
+    display: flex;
+    gap: 12px;
+}
+
+.linha-campos .campo { margin-bottom: 14px; }
+.linha-campos .cresce { flex: 1 1 auto; min-width: 0; }
+.linha-campos .estreito { flex: 0 0 110px; }
+
+@media (max-width: 420px) {
+    .linha-campos .estreito { flex: 0 0 90px; }
+}
+
+
+/* A dica muda de cor conforme a resposta. Verde e vermelho aqui
+   valem mais que um texto novo: a pessoa está varrendo a tela, não
+   lendo. */
+.dica.boa  { color: var(--verde); font-weight: 600; }
+.dica.ruim { color: var(--vermelho); font-weight: 600; }
+
+
+/* Senha com o botão de mostrar ----------------------------- */
+
+.linha-senha {
+    display: flex;
+    gap: 8px;
+}
+
+.linha-senha input { flex: 1; min-width: 0; }
+
+.botao-miudo {
+    width: auto;
+    min-height: 52px;
+    padding: 0 16px;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+
+/* A logo --------------------------------------------------- */
+
+.linha-logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.previa-logo {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 14px;
+    border: 1.5px dashed var(--linha);
+    background: var(--fundo) center / cover no-repeat;
+    font-size: 26px;
+}
+
+.linha-logo input[type="file"] {
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+}
+
+
+/* O endereço achado no mapa -------------------------------- */
+
+/* Mostra o que o mapa entendeu, e não um visto verde. Quem digitou a
+   rua errada precisa VER que caiu em outro lugar — um "ok" esconderia
+   justamente o erro que este botão existe para pegar. */
+.achado {
+    margin-top: 14px;
+    padding: 14px;
+    background: var(--agua-clara);
+    border: 1px solid #bfdffd;
+    border-radius: var(--raio);
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--marinho);
+}
+
+.achado a { color: var(--agua-escura); font-weight: 600; }
+
+
+#botao-cadastrar { margin-top: 26px; }
+
+.rodape-form {
+    margin-top: 16px;
+    text-align: center;
+    font-size: 14px;
+    color: var(--tinta-fraca);
+}
+
+.rodape-form a { color: var(--agua-escura); font-weight: 600; }
+
+
+#bloco-pronto .botao { margin-top: 8px; }

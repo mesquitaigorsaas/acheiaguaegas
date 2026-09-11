@@ -29,6 +29,12 @@ create table revendas (
   nome                  text not null,
   logo_url              text,
 
+  -- Só os 14 dígitos, sem ponto, barra nem traço. Guardar com
+  -- máscara faz o mesmo CNPJ entrar duas vezes escrito de dois
+  -- jeitos, e a trava de único deixa de travar.
+  cnpj                  text not null unique
+                        check (cnpj ~ '^[0-9]{14}$'),
+
   -- O WhatsApp que recebe o pedido. Guardado sem o 55: o código
   -- do país entra na hora de montar o link, como nos outros
   -- projetos da casa. Pedir que o dono digite o 55 é pedir para

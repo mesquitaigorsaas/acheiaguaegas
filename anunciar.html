@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Anunciar minha revenda — Achei Água &amp; Gás</title>
+    <meta name="description" content="Cadastre a sua revenda de água e gás e apareça para quem está procurando perto de você.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/busca.css">
+    <link rel="stylesheet" href="css/formulario.css">
+</head>
+
+<body>
+
+    <header class="topo">
+        <div class="limite">
+            <a class="marca" href="./" aria-label="Achei Água e Gás, página inicial">
+                <img src="assets/marca/achei-agua-e-gas.png" alt="Achei Água &amp; Gás">
+            </a>
+            <a class="link-anunciar" href="./">Voltar para a busca</a>
+        </div>
+        <p class="slogan">Apareça para quem está procurando agora.</p>
+    </header>
+
+    <main class="limite">
+
+        <p id="recado" class="recado" role="alert" hidden></p>
+
+        <form id="form-cadastro" class="passo" novalidate>
+
+            <h2>Anunciar minha revenda</h2>
+            <p class="explica">
+                Cinco minutos. Preço, horário e raio de entrega você define
+                depois, no painel, com calma.
+            </p>
+
+            <!-- A REVENDA -->
+            <fieldset class="grupo">
+                <legend>A revenda</legend>
+
+                <div class="campo">
+                    <label for="nome">Nome do estabelecimento</label>
+                    <input type="text" id="nome" autocomplete="organization" required>
+                    <p class="dica">É o nome que o cliente vê na lista. Ponha como está na fachada.</p>
+                </div>
+
+                <div class="campo">
+                    <label for="cnpj">CNPJ</label>
+                    <input type="text" id="cnpj" inputmode="numeric" placeholder="00.000.000/0000-00" required>
+                    <p class="dica" id="dica-cnpj">Só números. É o que vai na nota da assinatura.</p>
+                </div>
+
+                <div class="campo">
+                    <label for="logo">Logo</label>
+                    <div class="linha-logo">
+                        <div class="previa-logo" id="previa-logo" aria-hidden="true">💧</div>
+                        <input type="file" id="logo" accept="image/png,image/jpeg,image/webp">
+                    </div>
+                    <p class="dica">
+                        Quadrada fica melhor. Pode deixar para depois, no painel,
+                        e nesse caso entra um ícone no lugar.
+                    </p>
+                </div>
+            </fieldset>
+
+            <!-- ONDE FICA -->
+            <fieldset class="grupo">
+                <legend>Onde fica</legend>
+
+                <p class="explica-grupo">
+                    É daqui que o site mede a distância até o cliente. Endereço
+                    errado põe a sua revenda no lugar errado da lista.
+                </p>
+
+                <div class="campo">
+                    <label for="cep">CEP</label>
+                    <input type="text" id="cep" inputmode="numeric" placeholder="37130-000" autocomplete="postal-code">
+                </div>
+
+                <div class="linha-campos">
+                    <div class="campo cresce">
+                        <label for="rua">Rua</label>
+                        <input type="text" id="rua" autocomplete="address-line1" required>
+                    </div>
+                    <div class="campo estreito">
+                        <label for="numero">Número</label>
+                        <input type="text" id="numero" inputmode="numeric">
+                    </div>
+                </div>
+
+                <div class="campo">
+                    <label for="bairro">Bairro</label>
+                    <input type="text" id="bairro" autocomplete="address-level3">
+                </div>
+
+                <div class="linha-campos">
+                    <div class="campo cresce">
+                        <label for="cidade">Cidade</label>
+                        <input type="text" id="cidade" autocomplete="address-level2" required>
+                    </div>
+                    <div class="campo estreito">
+                        <label for="uf">UF</label>
+                        <input type="text" id="uf" maxlength="2" value="MG" autocomplete="address-level1" required>
+                    </div>
+                </div>
+
+                <button type="button" class="botao-vazio" id="botao-achar-endereco">
+                    Conferir este endereço no mapa
+                </button>
+
+                <p class="achado" id="achado" hidden></p>
+            </fieldset>
+
+            <!-- CONTATO -->
+            <fieldset class="grupo">
+                <legend>Contato</legend>
+
+                <div class="campo">
+                    <label for="whatsapp">WhatsApp que recebe os pedidos</label>
+                    <input type="tel" id="whatsapp" inputmode="numeric" placeholder="35999999999" required>
+                    <p class="dica">
+                        Só números, com o DDD. É este que aparece na lista e
+                        para onde o pedido do cliente vai.
+                    </p>
+                </div>
+
+                <div class="campo">
+                    <label for="responsavel">Seu nome</label>
+                    <input type="text" id="responsavel" autocomplete="name" required>
+                </div>
+
+                <div class="campo">
+                    <label for="telefone">Seu telefone</label>
+                    <input type="tel" id="telefone" inputmode="numeric" placeholder="35988887777" required>
+                    <p class="dica">
+                        Para falarmos com você sobre pagamento e acesso.
+                        Não aparece para o cliente.
+                    </p>
+                </div>
+            </fieldset>
+
+            <!-- ACESSO -->
+            <fieldset class="grupo">
+                <legend>Seu acesso ao painel</legend>
+
+                <div class="campo">
+                    <label for="email">E-mail</label>
+                    <input type="email" id="email" autocomplete="email" required>
+                    <p class="dica">É com ele que você entra e recupera a senha.</p>
+                </div>
+
+                <div class="campo">
+                    <label for="senha">Senha</label>
+                    <div class="linha-senha">
+                        <input type="password" id="senha" autocomplete="new-password" required>
+                        <button type="button" class="botao-vazio botao-miudo" data-ver-senha="senha">Mostrar</button>
+                    </div>
+                    <p class="dica">Pelo menos 6 caracteres.</p>
+                </div>
+
+                <div class="campo">
+                    <label for="repetir-senha">Repita a senha</label>
+                    <div class="linha-senha">
+                        <input type="password" id="repetir-senha" autocomplete="new-password" required>
+                        <button type="button" class="botao-vazio botao-miudo" data-ver-senha="repetir-senha">Mostrar</button>
+                    </div>
+                    <p class="dica" id="aviso-senhas"></p>
+                </div>
+            </fieldset>
+
+            <button type="submit" class="botao" id="botao-cadastrar">Criar minha conta</button>
+
+            <p class="rodape-form">
+                Já anuncia aqui? <a href="entrar.html">Entrar no painel</a>
+            </p>
+
+        </form>
+
+        <!-- Depois de salvar -->
+        <section class="passo" id="bloco-pronto" hidden>
+            <h2>Conta criada</h2>
+            <p class="explica" id="resumo-pronto"></p>
+
+            <p class="explica">
+                Agora entre no painel e preencha o que faz a sua revenda
+                aparecer na busca: o horário de funcionamento, se você entrega
+                ou atende no balcão, até onde entrega, e o preço de cada item.
+            </p>
+
+            <a class="botao" href="entrar.html">Entrar no painel</a>
+        </section>
+
+    </main>
+
+    <footer class="rodape">
+        Achei Água &amp; Gás · Mesquita SAAS
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/cnpj.js"></script>
+    <script src="js/distancia.js"></script>
+    <script src="js/onde.js"></script>
+    <script src="js/banco.js"></script>
+    <script src="js/anunciar.js"></script>
+
+</body>
+</html>
