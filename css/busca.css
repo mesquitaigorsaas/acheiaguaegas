@@ -494,3 +494,63 @@
 .detalhe-itens li.falta span { text-decoration: none; font-weight: 400; }
 
 .selo.incompleta { background: var(--gas-clara); color: #a8560a; }
+
+
+/* ==========================================
+   ENTREGAR OU BUSCAR
+
+   Fica logo abaixo do pedido, e não junto dos resultados, porque muda
+   QUEM entra na lista — não é um filtro sobre o que já apareceu.
+========================================== */
+
+.modos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.modo {
+    padding: 12px 10px;
+    background: var(--papel);
+    border: 2px solid var(--linha);
+    border-radius: var(--raio);
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--tinta-fraca);
+    cursor: pointer;
+    transition: .18s;
+}
+
+.modo.escolhido {
+    background: var(--agua-clara);
+    border-color: var(--agua);
+    color: var(--marinho);
+    font-weight: 700;
+}
+
+
+.so-abertas {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 12px;
+    font-size: 14.5px;
+    font-weight: 500;
+    color: var(--tinta-fraca);
+    cursor: pointer;
+}
+
+.so-abertas input {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--agua-escura);
+    cursor: pointer;
+}
+
+
+/* O que a revenda faz, no cartão. Só aparece quando ela NÃO faz o
+   outro: dizer "entrega e retira" em todas seria ruído, mas "só
+   balcão" é a informação que evita a pessoa esperar em casa. */
+.selo.so-balcao  { background: var(--gas-clara); color: #a8560a; }
+.selo.so-entrega { background: var(--agua-clara); color: var(--agua-escura); }

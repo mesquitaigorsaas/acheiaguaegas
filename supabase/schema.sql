@@ -44,10 +44,27 @@ create table revendas (
   latitude              numeric(10, 7) not null,
   longitude             numeric(10, 7) not null,
 
+  -- ENTREGA E RETIRADA — as duas perguntas que decidem se a
+  -- revenda serve para aquela pessoa.
+  --
+  -- Nem toda revenda entrega: muita gente vende só no balcão, e o
+  -- cliente vai buscar de carro ou de moto. Sem estas colunas o
+  -- site manda alguém esperar em casa uma entrega que nunca vem,
+  -- e quem leva a culpa é o site, não a revenda.
+  --
+  -- As duas podem ser verdadeiras ao mesmo tempo, e quase sempre
+  -- são. O que não pode é as duas serem falsas: revenda que não
+  -- entrega nem atende no balcão não vende para ninguém.
+  faz_entrega           boolean not null default true,
+  faz_retirada          boolean not null default true,
+  constraint vende_de_algum_jeito check (faz_entrega or faz_retirada),
+
   -- Até onde ela entrega. Não basta estar perto do cliente: quem
   -- está a oito quilômetros e entrega em dez atende; quem está a
   -- dois e entrega em um, não. Sem esta coluna a busca mostraria
   -- gente que vai recusar o pedido, e a culpa ficaria com o site.
+  --
+  -- Só vale para a entrega. Quem vai buscar dirige o quanto quiser.
   raio_entrega_km       numeric(5, 1) not null default 5
                         check (raio_entrega_km > 0 and raio_entrega_km <= 60),
 
@@ -73,7 +90,9 @@ create table revendas (
 create index idx_revendas_no_ar on revendas (publicado, assinatura_status, latitude);
 
 comment on table revendas is 'Os assinantes. Quem aparece na busca do cliente.';
-comment on column revendas.raio_entrega_km is 'Até onde entrega. Fora disto ela não aparece, mesmo estando perto.';
+comment on column revendas.raio_entrega_km is 'Até onde entrega. Só vale para entrega: quem vai buscar dirige o quanto quiser.';
+comment on column revendas.faz_entrega is 'Leva até o cliente. Falso quer dizer balcão só.';
+comment on column revendas.faz_retirada is 'Atende quem vai buscar no balcão.';
 
 
 -- ------------------------------------------------------------
@@ -292,23 +311,30 @@ $$;
 -- fazer duas buscas para pedir de uma revenda só é trabalho que
 -- o site deveria poupar.
 --
--- Devolve, por revenda: a distância, se está aberta, quantos dos
--- itens pedidos ela tem, o total desses, e o preço de cada um
--- para a tela poder detalhar.
+-- Recebe também COMO a pessoa quer receber. São duas buscas
+-- diferentes vestidas de uma:
+--
+--   'entrega'  — só quem entrega, e só dentro do raio DELA. O
+--                raio é a promessa que ela fez; fora dele, ela
+--                recusa o pedido e a culpa fica com o site.
+--
+--   'retirada' — só quem atende no balcão, e o raio dela não
+--                importa: quem vai buscar dirige o quanto quiser.
+--                Vale um teto maior, porque a pessoa aceita rodar
+--                para economizar ou porque é o único aberto.
 --
 -- É uma FUNÇÃO, e não uma consulta direta à tabela, de propósito.
 -- Com leitura livre em `revendas`, qualquer visitante baixaria a
 -- lista inteira de assinantes com um comando — que é a carteira
--- de clientes do negócio servida a um concorrente. Aqui só sai o
--- que cabe numa tela de busca, e só para quem informou onde está.
+-- de clientes do negócio servida a um concorrente.
 --
 -- A ORDEM é: tem tudo, depois aberta, depois a mais perto.
 --
 -- Tem tudo primeiro porque o pedido inteiro numa entrega só é o
 -- motivo de existir a lista de itens. Aberta em seguida porque
--- gás fechado não serve a quem quer hoje. E perto por último
--- entre os empatados, porque é isso que a pessoa com o botijão
--- vazio quer: o mais rápido.
+-- revenda fechada não atende hoje, e uma a cem metros com a porta
+-- fechada não serve a quem está sem gás agora. E perto por
+-- último entre os empatados, porque é isso que essa pessoa quer.
 --
 -- O PREÇO NÃO ORDENA. Ele aparece, e a tela marca a mais barata,
 -- mas quem escolhe entre economizar cinco reais e esperar menos
@@ -318,6 +344,7 @@ create or replace function buscar(
   p_lat      numeric,
   p_lon      numeric,
   p_itens    uuid[],
+  p_modo     text default 'entrega',
   p_raio_max numeric default 30
 )
 returns table (
@@ -328,6 +355,8 @@ returns table (
   endereco          text,
   distancia_km      numeric,
   aberta            boolean,
+  faz_entrega       boolean,
+  faz_retirada      boolean,
   itens_encontrados integer,
   total             numeric,
   precos            jsonb
@@ -342,6 +371,7 @@ as $$
       from revendas r
      where r.publicado
        and r.assinatura_status = 'ativa'
+       and (case when p_modo = 'retirada' then r.faz_retirada else r.faz_entrega end)
        -- Recorte grosseiro primeiro, por um quadrado de latitude e
        -- longitude. Um grau de latitude tem 111 km. Calcular a
        -- distância de todas as revendas do país para depois jogar
@@ -357,6 +387,8 @@ as $$
     p.endereco_texto,
     p.km,
     esta_aberta(p.id),
+    p.faz_entrega,
+    p.faz_retirada,
     count(pr.item_id)::integer,
     coalesce(sum(pr.preco), 0),
     coalesce(jsonb_object_agg(pr.item_id, pr.preco) filter (where pr.item_id is not null), '{}'::jsonb)
@@ -365,11 +397,15 @@ as $$
     on pr.revenda_id = p.id
    and pr.item_id = any (p_itens)
    and pr.disponivel
-  -- O corte é pelo MENOR entre o raio dela e o teto pedido: quem
-  -- está a oito quilômetros e entrega em dez atende; quem está a
-  -- dois e entrega em um, não.
-  where p.km <= least(p.raio_entrega_km, p_raio_max)
-  group by p.id, p.nome, p.logo_url, p.whatsapp, p.endereco_texto, p.km, p.raio_entrega_km
+  -- Na entrega, o corte é pelo MENOR entre o raio dela e o teto
+  -- pedido. Na retirada, o raio dela não tem nada a ver: quem
+  -- dirige até lá decide sozinho até onde vai.
+  where p.km <= case when p_modo = 'retirada'
+                     then p_raio_max
+                     else least(p.raio_entrega_km, p_raio_max)
+                end
+  group by p.id, p.nome, p.logo_url, p.whatsapp, p.endereco_texto, p.km,
+           p.faz_entrega, p.faz_retirada
   order by
     count(pr.item_id) = array_length(p_itens, 1) desc,
     esta_aberta(p.id) desc,

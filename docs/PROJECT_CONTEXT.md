@@ -66,6 +66,34 @@ Duas consequências que vêm junto:
 O molde da casa é WhatsApp: o cliente clica e a conversa abre com o pedido
 escrito. Aqui provavelmente é o mesmo, e o sistema não intermedia o dinheiro.
 
+## O que o cadastro da revenda TEM de exigir
+
+Decidido em 11/09/2026, depois de a busca ficar pronta. São os campos em que
+um erro do anunciante vira reclamação contra o site, e não contra ele.
+
+**Entrega, retirada, ou os dois.** Nem toda revenda entrega; muita gente vende
+só no balcão. Sem esta pergunta o site manda alguém esperar em casa uma
+entrega que nunca vem. O contrário também: quem só entrega e não atende no
+balcão precisa dizer, senão o cliente pega o carro à toa.
+
+**O horário, de verdade.** É o que decide se ela aparece na lista, porque o
+filtro de "aberto agora" vem ligado — água e gás é necessidade, e quem procura
+quer agora. Horário errado tem dois custos, e os dois são dela: cadastrado a
+menos, ela some da busca no melhor horário; cadastrado a mais, o cliente liga e
+não é atendido, e a próxima busca ele faz em outro lugar.
+
+**O raio de entrega, com honestidade.** É a promessa que ela faz. Fora dele
+ela não aparece, e dentro dele ela vai ter de atender. Raio inflado para
+aparecer mais é pedido recusado, e pedido recusado é o cliente saindo do site.
+
+**O preço em dia.** Preço velho é reclamação na certa, e aqui a comparação é o
+produto inteiro. O painel guarda quando cada preço foi mexido pela última vez,
+justamente para a gente poder cobrar quem esqueceu.
+
+A tela de cadastro precisa dizer isso em português, e não esconder atrás de um
+campo qualquer. O dono não está tentando enganar ninguém: ele está com pressa e
+não imagina o que cada campo faz na busca.
+
 ### 3. Quem paga, e por quê
 
 No Cardápio Online o dono paga pelo site. Aqui ele paga por aparecer. Pode

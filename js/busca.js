@@ -30,9 +30,11 @@
 const GUARDADO = "achei-agua-gas:onde";
 
 const estado = {
-    onde: null,   // { lat, lng, escrito }
-    tipo: "gas",  // a aba aberta: "gas" ou "agua"
-    pedido: []    // os itens marcados, na ordem em que foram marcados
+    onde: null,       // { lat, lng, escrito }
+    tipo: "gas",      // a aba aberta: "gas" ou "agua"
+    pedido: [],       // os itens marcados, na ordem em que foram marcados
+    modo: "entrega",  // "entrega" ou "retirada"
+    soAbertas: true   // água e gás é necessidade: quem procura quer agora
 };
 
 let catalogo = [];
@@ -207,6 +209,25 @@ function desenharPedido() {
 }
 
 
+/**
+ * Entregar ou buscar. Refaz a busca, e não filtra o que já veio: quem
+ * só atende no balcão nem foi trazida na busca de entrega, e o raio de
+ * entrega deixa de valer quando a pessoa vai de carro.
+ */
+function escolherModo(modo) {
+    estado.modo = modo;
+
+    document.querySelectorAll(".modo").forEach((b) => {
+        b.classList.toggle("escolhido", b.dataset.modo === modo);
+    });
+
+    document.getElementById("titulo-resultados").textContent =
+        modo === "retirada" ? "Onde buscar" : "Quem entrega aí";
+
+    if (estado.onde && estado.pedido.length) procurar();
+}
+
+
 function fecharPedido() {
     if (!estado.pedido.length) return;
 
@@ -250,7 +271,8 @@ async function procurar() {
 
     try {
         const ids = estado.pedido.map((i) => i.id);
-        desenharLista(await buscarRevendas(estado.onde.lat, estado.onde.lng, ids));
+        achadosDaVez = await buscarRevendas(estado.onde.lat, estado.onde.lng, ids, estado.modo);
+        desenharLista();
     } catch (erro) {
         console.error("Erro na busca:", erro);
         lista.innerHTML = `
@@ -262,29 +284,53 @@ async function procurar() {
 }
 
 
-function desenharLista(achados) {
+/*
+   A busca vai ao banco uma vez; o "só abertas" filtra o que já veio.
+   Ir de novo a cada clique numa caixinha faria a lista piscar sem
+   motivo, e no celular do bairro isso custa segundos.
+*/
+let achadosDaVez = [];
+
+function desenharLista() {
     const lista = document.getElementById("lista");
     const contagem = document.getElementById("contagem");
     const pedidos = estado.pedido.length;
 
+    const fechadas = achadosDaVez.filter((r) => !r.aberta).length;
+    const achados = estado.soAbertas ? achadosDaVez.filter((r) => r.aberta) : achadosDaVez;
+
     if (!achados.length) {
         contagem.textContent = "";
+
+        // Vazio por causa do filtro é outra conversa: a pessoa precisa
+        // saber que existe gente, só que fechada agora.
+        if (fechadas && estado.soAbertas) {
+            lista.innerHTML = `
+                <div class="vazio">
+                    <h3>Ninguém está aberto agora</h3>
+                    <p>
+                        ${fechadas === 1 ? "Uma revenda atende" : fechadas + " revendas atendem"}
+                        aí, mas ${fechadas === 1 ? "está fechada" : "estão fechadas"} neste
+                        momento. Desmarque a caixa acima para ver os preços e
+                        decidir o dia de amanhã.
+                    </p>
+                </div>`;
+            return;
+        }
+
         lista.innerHTML = `
             <div class="vazio">
-                <h3>Ninguém entrega isso aí ainda</h3>
+                <h3>Ninguém ${estado.modo === "retirada" ? "vende" : "entrega"} isso aí ainda</h3>
                 <p>
                     O site é novo e as revendas estão entrando aos poucos.
-                    Se você conhece uma que entrega no seu endereço, indique
+                    Se você conhece uma que atende perto de você, indique
                     para ela anunciar — passa a aparecer para o bairro inteiro.
                 </p>
             </div>`;
         return;
     }
 
-    const abertas = achados.filter((r) => r.aberta).length;
-    contagem.textContent = achados.length === 1
-        ? "1 revenda"
-        : achados.length + " revendas, " + abertas + " abertas agora";
+    contagem.textContent = achados.length === 1 ? "1 revenda" : achados.length + " revendas";
 
     // O selo de mais barata vale entre as que estão ABERTAS e têm o
     // pedido INTEIRO. Apontar a mais barata de todas quando ela está
@@ -338,6 +384,8 @@ function cartao(r, pedidos, menorTotal) {
                     <span class="selo ${r.aberta ? "aberta" : "fechada"}">${r.aberta ? "Aberta agora" : "Fechada"}</span>
                     ${maisBarata ? '<span class="selo mais-barata">Mais barata</span>' : ""}
                     ${completa ? "" : `<span class="selo incompleta">Tem ${r.itens_encontrados} de ${pedidos}</span>`}
+                    ${r.faz_entrega === false ? '<span class="selo so-balcao">Só no balcão</span>' : ""}
+                    ${r.faz_retirada === false ? '<span class="selo so-entrega">Só entrega</span>' : ""}
                     <span>${esc(kmEscrito(r.distancia_km) || "")}</span>
                 </div>
             </div>
@@ -369,9 +417,17 @@ function cartao(r, pedidos, menorTotal) {
     document.getElementById("form-endereco").addEventListener("submit", usarEndereco);
     document.getElementById("botao-fechar-pedido").addEventListener("click", fecharPedido);
 
+    document.getElementById("so-abertas").addEventListener("change", (evento) => {
+        estado.soAbertas = evento.target.checked;
+        desenharLista();
+    });
+
     document.addEventListener("click", (evento) => {
         const tipo = evento.target.closest("[data-tipo]");
         if (tipo) { abrirTipo(tipo.dataset.tipo); return; }
+
+        const modo = evento.target.closest("[data-modo]");
+        if (modo) { escolherModo(modo.dataset.modo); return; }
 
         const item = evento.target.closest("[data-item]");
         if (item) { alternarItem(item.dataset.item); return; }

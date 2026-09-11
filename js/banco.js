@@ -89,12 +89,13 @@ async function carregarCatalogo() {
  * Na demonstração, a mesma conta é feita aqui. O resultado tem os
  * mesmos campos, na mesma ordem.
  */
-async function buscarRevendas(lat, lng, idsDosItens, raioMax = 30) {
+async function buscarRevendas(lat, lng, idsDosItens, modo = "entrega", raioMax = 30) {
     if (temBanco()) {
         const { data, error } = await conectar().rpc("buscar", {
             p_lat: lat,
             p_lon: lng,
             p_itens: idsDosItens,
+            p_modo: modo,
             p_raio_max: raioMax
         });
 
@@ -102,17 +103,20 @@ async function buscarRevendas(lat, lng, idsDosItens, raioMax = 30) {
         return data || [];
     }
 
-    return buscarNaDemonstracao(lat, lng, idsDosItens, raioMax);
+    return buscarNaDemonstracao(lat, lng, idsDosItens, modo, raioMax);
 }
 
 
-async function buscarNaDemonstracao(lat, lng, idsDosItens, raioMax) {
+async function buscarNaDemonstracao(lat, lng, idsDosItens, modo, raioMax) {
     const dados = await lerDemo();
     const agora = new Date();
     const pedidos = idsDosItens.length;
 
     return dados.revendas
         .map((r) => {
+            // Quem não faz o que a pessoa pediu nem entra na conta.
+            if (modo === "retirada" ? !r.faz_retirada : !r.faz_entrega) return null;
+
             const precos = {};
             let total = 0;
 
@@ -129,10 +133,14 @@ async function buscarNaDemonstracao(lat, lng, idsDosItens, raioMax) {
             const km = distanciaEmKm(lat, lng, r.latitude, r.longitude);
             if (km === null) return null;
 
-            // O corte é pelo MENOR entre o raio dela e o teto pedido.
-            // Quem está a oito quilômetros e entrega em dez atende; quem
-            // está a dois e entrega em um, não.
-            if (km > Math.min(r.raio_entrega_km, raioMax)) return null;
+            // Na entrega, o corte é pelo MENOR entre o raio dela e o
+            // teto pedido: quem está a oito quilômetros e entrega em dez
+            // atende; quem está a dois e entrega em um, não.
+            //
+            // Na retirada, o raio dela não tem nada a ver com isso: quem
+            // dirige até lá decide sozinho até onde vai.
+            const limite = modo === "retirada" ? raioMax : Math.min(r.raio_entrega_km, raioMax);
+            if (km > limite) return null;
 
             return {
                 revenda_id: r.id,
@@ -142,6 +150,8 @@ async function buscarNaDemonstracao(lat, lng, idsDosItens, raioMax) {
                 endereco: r.endereco,
                 distancia_km: Math.round(km * 100) / 100,
                 aberta: estaAberta(r.horarios, agora),
+                faz_entrega: r.faz_entrega,
+                faz_retirada: r.faz_retirada,
                 itens_encontrados: achados,
                 total: Math.round(total * 100) / 100,
                 precos: precos

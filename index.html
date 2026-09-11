@@ -93,6 +93,18 @@
 
                 <div class="meu-pedido" id="meu-pedido" hidden></div>
 
+                <!-- Como a pessoa quer receber. Muda a lista inteira: na
+                     retirada entram as que só atendem no balcão, e o raio
+                     de entrega delas deixa de valer. -->
+                <div class="modos" id="modos">
+                    <button type="button" class="modo escolhido" data-modo="entrega">
+                        Quero que entreguem
+                    </button>
+                    <button type="button" class="modo" data-modo="retirada">
+                        Vou buscar
+                    </button>
+                </div>
+
                 <button type="button" class="botao" id="botao-fechar-pedido" hidden>
                     Fechar pedido e ver quem entrega
                 </button>
@@ -105,9 +117,17 @@
         <!-- PASSO 3 -->
         <section id="resultados" hidden>
             <div class="titulo-lista">
-                <h2>Quem entrega aí</h2>
+                <h2 id="titulo-resultados">Quem entrega aí</h2>
                 <span id="contagem"></span>
             </div>
+
+            <!-- Ligado por padrão: água e gás é necessidade, e quem
+                 procura quer agora. Desligar é para quem está só vendo
+                 preço, ou planejando o dia seguinte. -->
+            <label class="so-abertas">
+                <input type="checkbox" id="so-abertas" checked>
+                Mostrar só quem está aberto agora
+            </label>
             <div class="lista" id="lista"></div>
         </section>
 
