@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Achei Água &amp; Gás — quem entrega perto de você, e por quanto</title>
+    <meta name="description" content="Diga onde você está e veja quem entrega água e gás no seu endereço, aberto agora, com o preço na tela.">
+
+    <meta property="og:title" content="Achei Água &amp; Gás">
+    <meta property="og:description" content="Quem entrega água e gás perto de você, aberto agora, e por quanto.">
+    <meta property="og:type" content="website">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/busca.css">
+</head>
+
+<body>
+
+    <header class="topo">
+        <div class="limite">
+            <div class="marca">Achei <span class="agua">Água</span> &amp; <span class="gas">Gás</span></div>
+            <a class="link-anunciar" href="anunciar.html">Anunciar minha revenda</a>
+        </div>
+    </header>
+
+    <main class="limite">
+
+        <p id="recado" class="recado" role="alert" hidden></p>
+
+        <!-- PASSO 1 -->
+        <section class="passo" id="passo-onde">
+            <h2>Onde você está?</h2>
+            <p class="explica">É por aqui que a gente mede quem está mais perto de você.</p>
+
+            <div class="corpo">
+                <button type="button" class="botao" id="botao-gps">
+                    Usar a minha localização
+                </button>
+
+                <div class="ou">ou digite o endereço</div>
+
+                <form id="form-endereco" novalidate>
+                    <div class="campo">
+                        <label for="rua">Rua</label>
+                        <input type="text" id="rua" placeholder="Av. Governador Valadares" autocomplete="street-address">
+                    </div>
+
+                    <div class="campo">
+                        <label for="cidade">Cidade</label>
+                        <input type="text" id="cidade" placeholder="Alfenas" autocomplete="address-level2">
+                        <p class="dica">Se souber o CEP, pode pôr no lugar da rua. Acha mais rápido.</p>
+                    </div>
+
+                    <button type="submit" class="botao-vazio">Achar este endereço</button>
+                </form>
+            </div>
+
+            <div class="resumo-passo" id="resumo-onde"></div>
+            <button type="button" class="botao-vazio botao-trocar" data-voltar="onde">Trocar</button>
+        </section>
+
+        <!-- PASSO 2 -->
+        <section class="passo" id="passo-oque" hidden>
+            <h2>O que você quer?</h2>
+            <p class="explica">Escolha para a gente comparar o preço certo.</p>
+
+            <div class="corpo">
+                <div class="tipos">
+                    <button type="button" class="tipo" data-tipo="gas">
+                        <span class="emoji" aria-hidden="true">🔥</span>
+                        Gás
+                    </button>
+                    <button type="button" class="tipo" data-tipo="agua">
+                        <span class="emoji" aria-hidden="true">💧</span>
+                        Água
+                    </button>
+                </div>
+
+                <div class="itens" id="itens"></div>
+            </div>
+
+            <div class="resumo-passo" id="resumo-oque"></div>
+            <button type="button" class="botao-vazio botao-trocar" data-voltar="oque">Trocar</button>
+        </section>
+
+        <!-- PASSO 3 -->
+        <section id="resultados" hidden>
+            <div class="titulo-lista">
+                <h2>Quem entrega aí</h2>
+                <span id="contagem"></span>
+            </div>
+            <div class="lista" id="lista"></div>
+        </section>
+
+        <p class="rodape">
+            Achei Água &amp; Gás · Mesquita SAAS<br>
+            Tem revenda? <a href="anunciar.html">Anuncie e apareça para quem procura</a>
+        </p>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/distancia.js"></script>
+    <script src="js/onde.js"></script>
+    <script src="js/banco.js"></script>
+    <script src="js/busca.js"></script>
+
+</body>
+</html>

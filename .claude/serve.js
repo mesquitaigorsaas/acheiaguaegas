@@ -44,4 +44,4 @@ http.createServer((req, res) => {
         });
         res.end(conteudo);
     });
-}).listen(PORTA, () => console.log("Achei Água e Gás em http://localhost:" + PORTA));
+}).listen(PORTA, () => console.log("Achei Água & Gás em http://localhost:" + PORTA));

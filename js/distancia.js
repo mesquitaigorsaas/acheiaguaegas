@@ -1,5 +1,5 @@
 // ==========================================
-// ACHEI ÁGUA E GÁS
+// ACHEI ÁGUA & GÁS
 // Arquivo: distancia.js
 // Versão: 1.0
 // ==========================================
@@ -64,6 +64,15 @@ function kmEscrito(km) {
     if (km === null || km === undefined || !Number.isFinite(Number(km))) return null;
 
     const v = Number(km);
-    if (v < 1) return Math.max(100, Math.round(v * 1000 / 100) * 100) + " m";
+
+    if (v < 1) {
+        const metros = Math.max(100, Math.round(v * 1000 / 100) * 100);
+
+        // 998 metros arredonda para 1000, e "1000 m" é jeito nenhum de
+        // escrever um quilômetro. Quando a conta chega lá, escreve como
+        // quilômetro mesmo.
+        if (metros < 1000) return metros + " m";
+    }
+
     return v.toFixed(1).replace(".", ",") + " km";
 }

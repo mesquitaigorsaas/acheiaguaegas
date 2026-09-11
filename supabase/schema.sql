@@ -1,5 +1,5 @@
 -- ============================================================
--- ACHEI ÁGUA E GÁS — ESTRUTURA DO BANCO
+-- ACHEI ÁGUA & GÁS — ESTRUTURA DO BANCO
 --
 -- Um site só, várias revendas anunciando. O cliente diz onde
 -- está, e o banco responde quem entrega ali, está aberto agora,

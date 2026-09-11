@@ -1,0 +1,179 @@
+/* ==========================================
+   ACHEI ÁGUA & GÁS — BASE
+
+   As cores vêm das duas coisas que o site vende: o azul da água e o
+   laranja da chama do gás. Elas não disputam a tela — o azul é a cor
+   do site, e o laranja aparece só onde o assunto é gás.
+
+   Quem usa isto está com o botijão vazio na cozinha, de noite, no
+   celular, com pressa. Então: texto grande, botão que o dedo acerta, e
+   o preço legível de longe.
+   ========================================== */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body, h1, h2, h3, p, ul, ol, li, figure, blockquote {
+    margin: 0;
+    padding: 0;
+}
+
+ul, ol { list-style: none; }
+img { max-width: 100%; display: block; }
+button, input, select { font: inherit; color: inherit; }
+
+
+:root {
+    --agua: #1878c4;
+    --agua-escura: #125f9d;
+    --agua-clara: #e8f2fb;
+
+    --gas: #e8590c;
+    --gas-clara: #fdeee5;
+
+    --tinta: #15202b;
+    --tinta-fraca: #5a6b7d;
+    --linha: #e1e7ee;
+    --papel: #ffffff;
+    --fundo: #f5f8fb;
+
+    --verde: #157a43;
+    --verde-claro: #e7f5ec;
+    --vermelho: #b42318;
+    --vermelho-claro: #fdeceb;
+
+    --fonte: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --titulo: "Sora", var(--fonte);
+
+    --raio: 14px;
+    --raio-grande: 20px;
+    --sombra: 0 1px 2px rgba(21, 32, 43, .06), 0 8px 24px rgba(21, 32, 43, .06);
+}
+
+
+body {
+    background: var(--fundo);
+    color: var(--tinta);
+    font-family: var(--fonte);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+}
+
+.limite {
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 18px;
+}
+
+.apenas-leitor-de-tela {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+
+/* ==========================================
+   BOTÕES
+========================================== */
+
+.botao,
+.botao-vazio {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    /* 52px de altura. Abaixo disso o polegar erra, e quem está com o
+       botijão vazio não tem paciência para errar duas vezes. */
+    min-height: 52px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: var(--raio);
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: .18s;
+}
+
+.botao {
+    background: var(--agua);
+    color: #fff;
+}
+
+.botao:hover:not(:disabled) { background: var(--agua-escura); }
+.botao:disabled { opacity: .5; cursor: default; }
+
+.botao-vazio {
+    background: var(--papel);
+    color: var(--tinta);
+    border: 1.5px solid var(--linha);
+}
+
+.botao-vazio:hover { border-color: var(--agua); color: var(--agua); }
+
+.botao-zap {
+    background: var(--verde);
+    color: #fff;
+}
+
+.botao-zap:hover { background: #106336; }
+
+
+/* ==========================================
+   CAMPOS
+========================================== */
+
+.campo { margin-bottom: 14px; }
+
+.campo label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.campo input,
+.campo select {
+    width: 100%;
+    min-height: 52px;
+    padding: 12px 14px;
+    background: var(--papel);
+    border: 1.5px solid var(--linha);
+    border-radius: var(--raio);
+    outline: none;
+}
+
+.campo input:focus,
+.campo select:focus { border-color: var(--agua); }
+
+.campo .dica {
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--tinta-fraca);
+}
+
+
+/* ==========================================
+   RECADOS
+========================================== */
+
+.recado {
+    padding: 12px 14px;
+    border-radius: var(--raio);
+    margin-bottom: 14px;
+    font-size: 14.5px;
+    font-weight: 500;
+    background: var(--agua-clara);
+    color: var(--agua-escura);
+}
+
+.recado.erro {
+    background: var(--vermelho-claro);
+    color: var(--vermelho);
+}

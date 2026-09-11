@@ -1,0 +1,360 @@
+/* ==========================================
+   ACHEI ÁGUA & GÁS — A TELA DE BUSCA
+
+   Três passos, um embaixo do outro, na mesma página: onde você está,
+   o que você quer, e quem entrega. O de baixo só aparece quando o de
+   cima está respondido.
+
+   Sem tela nova a cada passo de propósito. Voltar para corrigir o
+   endereço não pode custar uma navegação, porque endereço errado é o
+   erro mais comum aqui — e o mais caro, já que ele decide a lista
+   inteira.
+   ========================================== */
+
+/* ==========================================
+   TOPO
+========================================== */
+
+.topo {
+    background: var(--papel);
+    border-bottom: 1px solid var(--linha);
+    padding: 14px 0;
+}
+
+.topo .limite {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.marca {
+    font-family: var(--titulo);
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: -.4px;
+    margin-right: auto;
+}
+
+.marca .agua { color: var(--agua); }
+.marca .gas  { color: var(--gas); }
+
+.link-anunciar {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--agua);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+
+/* ==========================================
+   OS PASSOS
+========================================== */
+
+.passo {
+    background: var(--papel);
+    border: 1px solid var(--linha);
+    border-radius: var(--raio-grande);
+    padding: 20px 18px;
+    margin: 16px 0;
+    box-shadow: var(--sombra);
+}
+
+.passo > h2 {
+    font-family: var(--titulo);
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -.3px;
+    margin-bottom: 4px;
+}
+
+.passo > .explica {
+    font-size: 14.5px;
+    color: var(--tinta-fraca);
+    margin-bottom: 16px;
+}
+
+/* O passo já respondido encolhe e vira um resumo com botão de trocar.
+   Continuar ocupando meia tela depois de respondido empurra o que
+   importa — a lista — para baixo da dobra. */
+.passo.pronto {
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.passo.pronto > h2,
+.passo.pronto > .explica,
+.passo.pronto > .corpo { display: none; }
+
+.resumo-passo {
+    flex: 1;
+    min-width: 0;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.resumo-passo small {
+    display: block;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--tinta-fraca);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.botao-trocar {
+    flex: none;
+    width: auto;
+    min-height: 40px;
+    padding: 8px 16px;
+    font-size: 14px;
+}
+
+.passo:not(.pronto) .resumo-passo,
+.passo:not(.pronto) .botao-trocar { display: none; }
+
+
+/* ==========================================
+   ONDE VOCÊ ESTÁ
+========================================== */
+
+.ou {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 16px 0;
+    font-size: 13px;
+    color: var(--tinta-fraca);
+}
+
+.ou::before,
+.ou::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--linha);
+}
+
+
+/* ==========================================
+   O QUE VOCÊ QUER
+========================================== */
+
+.tipos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.tipo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 18px 12px;
+    background: var(--papel);
+    border: 2px solid var(--linha);
+    border-radius: var(--raio);
+    font-weight: 700;
+    cursor: pointer;
+    transition: .18s;
+}
+
+.tipo .emoji { font-size: 28px; line-height: 1; }
+
+.tipo[data-tipo="agua"].escolhido { border-color: var(--agua); background: var(--agua-clara); color: var(--agua-escura); }
+.tipo[data-tipo="gas"].escolhido  { border-color: var(--gas);  background: var(--gas-clara);  color: var(--gas); }
+
+.itens {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.item-botao {
+    padding: 11px 18px;
+    background: var(--papel);
+    border: 1.5px solid var(--linha);
+    border-radius: 999px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: .18s;
+}
+
+.item-botao:hover { border-color: var(--tinta-fraca); }
+
+.item-botao.escolhido {
+    background: var(--tinta);
+    border-color: var(--tinta);
+    color: #fff;
+}
+
+
+/* ==========================================
+   OS RESULTADOS
+========================================== */
+
+.titulo-lista {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 24px 0 12px;
+}
+
+.titulo-lista h2 {
+    font-family: var(--titulo);
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.titulo-lista span {
+    font-size: 13.5px;
+    color: var(--tinta-fraca);
+}
+
+.lista { display: grid; gap: 12px; }
+
+.revenda {
+    display: grid;
+    grid-template-columns: 56px 1fr auto;
+    gap: 14px;
+    align-items: center;
+    background: var(--papel);
+    border: 1px solid var(--linha);
+    border-radius: var(--raio-grande);
+    padding: 16px;
+    box-shadow: var(--sombra);
+}
+
+/* A primeira da lista é a mais barata entre as abertas, e é onde a
+   maioria vai clicar. Ganha a borda para a decisão ser de um olhar. */
+.revenda.melhor { border-color: var(--agua); border-width: 2px; }
+
+.revenda .logo {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    object-fit: cover;
+    background: var(--fundo);
+}
+
+.revenda .logo-vazia {
+    display: grid;
+    place-items: center;
+    font-size: 22px;
+    color: var(--tinta-fraca);
+}
+
+.revenda .miolo { min-width: 0; }
+
+.revenda h3 {
+    font-size: 16px;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.linha-selos {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+    font-size: 13.5px;
+    color: var(--tinta-fraca);
+}
+
+.selo {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 700;
+}
+
+.selo.aberta  { background: var(--verde-claro);    color: var(--verde); }
+.selo.fechada { background: var(--vermelho-claro); color: var(--vermelho); }
+
+.selo.mais-barata { background: var(--agua-clara); color: var(--agua-escura); }
+
+.revenda .preco {
+    text-align: right;
+    font-family: var(--titulo);
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: -.5px;
+    white-space: nowrap;
+}
+
+.revenda .preco small {
+    display: block;
+    font-family: var(--fonte);
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--tinta-fraca);
+    letter-spacing: 0;
+}
+
+.acao-revenda {
+    grid-column: 1 / -1;
+    margin-top: 4px;
+}
+
+.acao-revenda .botao-zap { min-height: 46px; }
+
+
+/* A revenda fechada continua na lista, mas apagada. Sumir com ela
+   esconderia o preço de quem abre às 7h — e quem procura às 23h muitas
+   vezes quer justamente saber quanto vai pagar amanhã. */
+.revenda.fechada { opacity: .72; }
+
+
+.vazio {
+    background: var(--papel);
+    border: 1px dashed var(--linha);
+    border-radius: var(--raio-grande);
+    padding: 30px 20px;
+    text-align: center;
+}
+
+.vazio h3 {
+    font-family: var(--titulo);
+    font-size: 17px;
+    margin-bottom: 6px;
+}
+
+.vazio p {
+    font-size: 14.5px;
+    color: var(--tinta-fraca);
+    max-width: 42ch;
+    margin: 0 auto;
+}
+
+
+.rodape {
+    margin: 40px 0 30px;
+    text-align: center;
+    font-size: 13.5px;
+    color: var(--tinta-fraca);
+}
+
+.rodape a { color: var(--agua); }
+
+
+@media (max-width: 480px) {
+    .revenda {
+        grid-template-columns: 48px 1fr;
+        row-gap: 10px;
+    }
+    .revenda .logo { width: 48px; height: 48px; }
+    .revenda .preco { grid-column: 2; text-align: left; }
+}

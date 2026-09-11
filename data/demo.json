@@ -1,0 +1,130 @@
+{
+    "_leia": "Revendas de mentira, para a busca funcionar antes de existir banco. São seis pontos espalhados por Alfenas, com preços e raios diferentes de propósito: é o que faz dar para conferir se a ordem e o corte por raio estão certos. O banco de verdade entra depois, e esta lista continua servindo para demonstrar o produto a um cliente novo sem depender de nada.",
+
+    "itens": [
+        { "id": "gas-p13", "tipo": "gas", "nome": "Botijão P13 — 13 kg", "apelido": "P13", "ordem": 10 },
+        { "id": "gas-p45", "tipo": "gas", "nome": "Botijão P45 — 45 kg", "apelido": "P45", "ordem": 20 },
+        { "id": "gas-p8", "tipo": "gas", "nome": "Botijão P8 — 8 kg", "apelido": "P8", "ordem": 30 },
+        { "id": "gas-p5", "tipo": "gas", "nome": "Botijão P5 — 5 kg", "apelido": "P5", "ordem": 40 },
+        { "id": "agua-20", "tipo": "agua", "nome": "Galão 20 litros", "apelido": "20L", "ordem": 10 },
+        { "id": "agua-10", "tipo": "agua", "nome": "Galão 10 litros", "apelido": "10L", "ordem": 20 },
+        { "id": "agua-fardo15", "tipo": "agua", "nome": "Fardo 1,5 litro — 6 unidades", "apelido": "Fardo 1,5L", "ordem": 30 }
+    ],
+
+    "revendas": [
+        {
+            "id": "r1",
+            "nome": "Gás Central Alfenas",
+            "logo_url": null,
+            "whatsapp": "35999990001",
+            "endereco": "Av. Governador Valadares, Centro",
+            "latitude": -21.4258,
+            "longitude": -45.9472,
+            "raio_entrega_km": 8,
+            "horarios": [
+                { "rotulo": "Segunda a sábado", "dias": [1, 2, 3, 4, 5, 6], "abre": "07:00", "fecha": "19:00" },
+                { "rotulo": "Domingo", "dias": [0], "abre": "08:00", "fecha": "12:00" }
+            ],
+            "precos": {
+                "gas-p13": 105.00,
+                "gas-p45": 420.00,
+                "gas-p8": 89.00,
+                "agua-20": 14.00,
+                "agua-10": 9.00
+            }
+        },
+        {
+            "id": "r2",
+            "nome": "Água e Gás do Zé",
+            "logo_url": null,
+            "whatsapp": "35999990002",
+            "endereco": "R. Pedro Ferreira, Jardim Alvorada",
+            "latitude": -21.4192,
+            "longitude": -45.9531,
+            "raio_entrega_km": 5,
+            "horarios": [
+                { "rotulo": "Todos os dias", "dias": [0, 1, 2, 3, 4, 5, 6], "abre": "06:30", "fecha": "22:00" }
+            ],
+            "precos": {
+                "gas-p13": 99.90,
+                "gas-p8": 85.00,
+                "agua-20": 12.50,
+                "agua-10": 8.50,
+                "agua-fardo15": 21.90
+            }
+        },
+        {
+            "id": "r3",
+            "nome": "Supergasbras Vila Teixeira",
+            "logo_url": null,
+            "whatsapp": "35999990003",
+            "endereco": "R. Geraldo Freitas da Costa, Vila Teixeira",
+            "latitude": -21.4341,
+            "longitude": -45.9398,
+            "raio_entrega_km": 12,
+            "horarios": [
+                { "rotulo": "Segunda a sexta", "dias": [1, 2, 3, 4, 5], "abre": "08:00", "fecha": "18:00" },
+                { "rotulo": "Sábado", "dias": [6], "abre": "08:00", "fecha": "13:00" }
+            ],
+            "precos": {
+                "gas-p13": 102.00,
+                "gas-p45": 405.00,
+                "gas-p5": 62.00,
+                "agua-20": 13.00
+            }
+        },
+        {
+            "id": "r4",
+            "nome": "Disk Gás 24 Horas",
+            "logo_url": null,
+            "whatsapp": "35999990004",
+            "endereco": "Av. Dr. Luiz Ribeiro, Santa Clara",
+            "latitude": -21.4415,
+            "longitude": -45.9605,
+            "raio_entrega_km": 15,
+            "horarios": [
+                { "rotulo": "Todos os dias, dia e noite", "dias": [0, 1, 2, 3, 4, 5, 6], "abre": "00:00", "fecha": "00:00" }
+            ],
+            "precos": {
+                "gas-p13": 112.00,
+                "gas-p8": 95.00,
+                "agua-20": 16.00
+            }
+        },
+        {
+            "id": "r5",
+            "nome": "Água Pura Distribuidora",
+            "logo_url": null,
+            "whatsapp": "35999990005",
+            "endereco": "R. Silvestre Ferraz, Centro",
+            "latitude": -21.4277,
+            "longitude": -45.9451,
+            "raio_entrega_km": 6,
+            "horarios": [
+                { "rotulo": "Segunda a sábado", "dias": [1, 2, 3, 4, 5, 6], "abre": "07:30", "fecha": "18:30" }
+            ],
+            "precos": {
+                "agua-20": 11.90,
+                "agua-10": 8.00,
+                "agua-fardo15": 19.90
+            }
+        },
+        {
+            "id": "r6",
+            "nome": "Gás Bom Preço Machado",
+            "logo_url": null,
+            "whatsapp": "35999990006",
+            "endereco": "Centro, Machado",
+            "latitude": -21.6742,
+            "longitude": -45.9195,
+            "raio_entrega_km": 10,
+            "horarios": [
+                { "rotulo": "Segunda a sábado", "dias": [1, 2, 3, 4, 5, 6], "abre": "07:00", "fecha": "18:00" }
+            ],
+            "precos": {
+                "gas-p13": 92.00,
+                "agua-20": 10.90
+            }
+        }
+    ]
+}

@@ -1,7 +1,9 @@
-# Achei Água e Gás — contexto do projeto
+# Achei Água & Gás — contexto do projeto
 
 **Empresa:** Mesquita SAAS
 **Começou em:** 11/09/2026
+**Nome:** Achei Água & Gás, decidido em 11/09/2026. Entra na família dos
+outros: Achei Vaga, Achei Músico, Achei República.
 
 ---
 
