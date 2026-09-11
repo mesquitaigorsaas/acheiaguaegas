@@ -1,9 +1,14 @@
 /* ==========================================
    ACHEI ÁGUA & GÁS — BASE
 
-   As cores vêm das duas coisas que o site vende: o azul da água e o
-   laranja da chama do gás. Elas não disputam a tela — o azul é a cor
-   do site, e o laranja aparece só onde o assunto é gás.
+   As cores saem da logo, e não de um gosto: o azul-marinho do fundo
+   dela, o azul claro do "Água" e o âmbar do "Gás".
+
+   O marinho manda no cabeçalho, e é por isso que a logo funciona lá —
+   o "Achei" dela é branco, e some em qualquer fundo claro. Do
+   cabeçalho para baixo é claro: linha azulada, fundo de cartão branco,
+   e o azul claro nos detalhes. Um site de busca se lê melhor claro, e
+   o marinho seria peso demais numa tela que a pessoa varre com pressa.
 
    Quem usa isto está com o botijão vazio na cozinha, de noite, no
    celular, com pressa. Então: texto grande, botão que o dedo acerta, e
@@ -23,18 +28,35 @@ button, input, select { font: inherit; color: inherit; }
 
 
 :root {
-    --agua: #1878c4;
-    --agua-escura: #125f9d;
-    --agua-clara: #e8f2fb;
+    /* O marinho do fundo da logo. Manda no cabeçalho e no rodapé. */
+    --marinho: #0b2d52;
+    --marinho-fundo: #08223f;
+    --marinho-clara: #16456f;
 
-    --gas: #e8590c;
-    --gas-clara: #fdeee5;
+    /* O azul do "Água", tirado a dedo do arquivo da logo: é o tom mais
+       presente nas letras dela. Manda nos detalhes, nas bordas, nos
+       links e no que estiver escolhido. */
+    --agua: #0093fc;
+    --agua-clara: #e6f3ff;
 
-    --tinta: #15202b;
-    --tinta-fraca: #5a6b7d;
-    --linha: #e1e7ee;
+    /* O mesmo azul, escurecido, e só para onde houver TEXTO BRANCO em
+       cima. Branco sobre #0093fc dá 3,2 de contraste, abaixo do mínimo
+       legível — e esta é uma tela que a pessoa lê de noite, com pressa,
+       na cozinha. O escuro passa de 4,9. */
+    --agua-escura: #0b72c9;
+
+    /* O âmbar do "Gás". Aparece só onde o assunto é gás, e nunca
+       disputa com o azul. */
+    --gas: #ef8a17;
+    --gas-clara: #fdf2e2;
+
+    --tinta: #10243a;
+    --tinta-fraca: #5b7186;
+    /* A linha puxa para o azul, e não para o cinza. É o que costura o
+       claro de baixo ao marinho de cima. */
+    --linha: #dbe7f3;
     --papel: #ffffff;
-    --fundo: #f5f8fb;
+    --fundo: #f1f6fc;
 
     --verde: #157a43;
     --verde-claro: #e7f5ec;
@@ -102,11 +124,11 @@ body {
 }
 
 .botao {
-    background: var(--agua);
+    background: var(--agua-escura);
     color: #fff;
 }
 
-.botao:hover:not(:disabled) { background: var(--agua-escura); }
+.botao:hover:not(:disabled) { background: #0a63af; }
 .botao:disabled { opacity: .5; cursor: default; }
 
 .botao-vazio {
@@ -170,7 +192,8 @@ body {
     font-size: 14.5px;
     font-weight: 500;
     background: var(--agua-clara);
-    color: var(--agua-escura);
+    border: 1px solid #bfdffd;
+    color: var(--marinho);
 }
 
 .recado.erro {
