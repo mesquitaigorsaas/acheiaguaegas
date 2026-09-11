@@ -34,6 +34,7 @@ que escolhe por ele. Disso vêm três coisas que lá não existiam:
 |---|---|
 | Banco, regras de segurança e catálogo | no ar no Supabase |
 | Busca do cliente, com distância e preço | pronta e testada contra o banco |
+| Revendas de exemplo em Alfenas | no banco, para demonstrar |
 | Pedido com água e gás juntos | pronto |
 | Entrega ou retirada | pronto |
 | Cadastro da revenda | pronto e testado |
@@ -67,6 +68,12 @@ No SQL Editor, nesta ordem:
 1. `supabase/schema.sql` — tabelas e as funções que respondem à busca
 2. `supabase/policies.sql` — as regras de segurança
 3. `supabase/itens.sql` — o catálogo de botijões e galões
+4. `supabase/exemplo-alfenas.sql` — seis revendas de mentira, para o site ter
+   o que mostrar antes do primeiro cliente. O CNPJ delas começa com 99, e é
+   assim que se apaga todas de uma vez:
+   ```sql
+   delete from revendas where cnpj like 99%;
+   ```
 
 Depois, a função de cadastro:
 

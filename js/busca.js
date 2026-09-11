@@ -5,17 +5,23 @@
 // ==========================================
 
 /*
-   A tela do cliente, em três passos na mesma página.
+   A tela do cliente, em dois passos e uma lista que se refaz sozinha.
 
      1. onde você está
-     2. o que você quer — um item ou vários
-     3. quem entrega aí
+     2. o que você quer — e a lista já aparece embaixo
 
-   O passo de baixo só aparece quando o de cima está respondido, e o
-   respondido encolhe para um resumo com botão de trocar. Sem tela nova
-   de propósito: endereço errado é o erro mais comum aqui, e o mais
-   caro, já que decide a lista inteira. Voltar para corrigir não pode
-   custar uma navegação.
+   NÃO EXISTE BOTÃO DE CONFIRMAR. Quem já disse onde está e marcou o
+   botijão respondeu tudo o que a busca precisa; pedir mais um clique
+   para "fechar o pedido" é cobrar um passo que não decide nada. Marcar
+   outro item, ou trocar entre entregar e buscar, refaz a lista na hora.
+
+   O passo do endereço encolhe para um resumo com botão de trocar. O do
+   pedido fica aberto, porque é nele que a pessoa continua mexendo
+   enquanto olha a lista.
+
+   Sem tela nova de propósito: endereço errado é o erro mais comum aqui,
+   e o mais caro, já que decide a lista inteira. Voltar para corrigir
+   não pode custar uma navegação.
 
    O PEDIDO É UMA LISTA, e não um item só. Quem está com o botijão
    vazio muitas vezes está com o galão vazio também, e comprar os dois
@@ -132,7 +138,7 @@ function definirOnde(onde) {
     fecharPasso("passo-onde");
     document.getElementById("passo-oque").hidden = false;
 
-    if (estado.pedido.length) procurar();
+    if (estado.pedido.length) procurarLogo();
 }
 
 
@@ -179,21 +185,44 @@ function alternarItem(id) {
 
     abrirTipo(estado.tipo);
     desenharPedido();
+
+    // Sem item nenhum não há o que listar. Esconder é melhor que
+    // deixar a lista anterior na tela: ela responderia a uma pergunta
+    // que a pessoa acabou de desfazer.
+    if (!estado.pedido.length) {
+        document.getElementById("resultados").hidden = true;
+        return;
+    }
+
+    procurarLogo();
+}
+
+
+/*
+   Espera um instante antes de ir ao banco.
+
+   Quem quer gás e água toca nos dois botões em seguida, e sem esta
+   pausa a primeira busca sai com um item só, some, e é substituída
+   pela segunda — a lista pisca e mostra por um segundo uma resposta
+   que já está errada.
+*/
+let esperando = null;
+
+function procurarLogo() {
+    clearTimeout(esperando);
+    esperando = setTimeout(procurar, 250);
 }
 
 
 function desenharPedido() {
     const caixa = document.getElementById("meu-pedido");
-    const botao = document.getElementById("botao-fechar-pedido");
 
     if (!estado.pedido.length) {
         caixa.hidden = true;
-        botao.hidden = true;
         return;
     }
 
     caixa.hidden = false;
-    botao.hidden = false;
 
     caixa.innerHTML = "<span class='rotulo-pedido'>Seu pedido</span>"
         + estado.pedido.map((i) => `
@@ -203,9 +232,6 @@ function desenharPedido() {
             </button>
         `).join("");
 
-    botao.textContent = estado.pedido.length === 1
-        ? "Ver quem entrega"
-        : "Fechar pedido e ver quem entrega";
 }
 
 
@@ -228,18 +254,6 @@ function escolherModo(modo) {
 }
 
 
-function fecharPedido() {
-    if (!estado.pedido.length) return;
-
-    document.getElementById("resumo-oque").innerHTML =
-        esc(estado.pedido.map((i) => i.apelido || i.nome).join(" + "))
-        + "<small>" + estado.pedido.length + (estado.pedido.length === 1 ? " item" : " itens") + "</small>";
-
-    fecharPasso("passo-oque");
-    procurar();
-}
-
-
 /* ==========================================
    OS PASSOS ABRINDO E FECHANDO
 ========================================== */
@@ -248,10 +262,10 @@ function fecharPasso(id) {
     document.getElementById(id).classList.add("pronto");
 }
 
-function abrirPasso(qual) {
-    const id = qual === "onde" ? "passo-onde" : "passo-oque";
-    document.getElementById(id).classList.remove("pronto");
-    document.getElementById(id).scrollIntoView({ behavior: "smooth", block: "start" });
+function abrirPasso() {
+    const passo = document.getElementById("passo-onde");
+    passo.classList.remove("pronto");
+    passo.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 
@@ -269,10 +283,20 @@ async function procurar() {
     document.getElementById("contagem").textContent = "";
     lista.innerHTML = `<div class="vazio"><p>Procurando...</p></div>`;
 
+    const primeiraVez = secao.dataset.jaApareceu !== "sim";
+
     try {
         const ids = estado.pedido.map((i) => i.id);
         achadosDaVez = await buscarRevendas(estado.onde.lat, estado.onde.lng, ids, estado.modo);
         desenharLista();
+
+        // Rola até a lista só na PRIMEIRA vez. Depois disso a pessoa
+        // está marcando outros itens, e puxar a tela a cada toque tira
+        // de debaixo do dedo o botão que ela ia apertar.
+        if (primeiraVez) {
+            secao.dataset.jaApareceu = "sim";
+            secao.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
     } catch (erro) {
         console.error("Erro na busca:", erro);
         lista.innerHTML = `
@@ -415,8 +439,6 @@ function cartao(r, pedidos, menorTotal) {
 (async function iniciar() {
     document.getElementById("botao-gps").addEventListener("click", usarGps);
     document.getElementById("form-endereco").addEventListener("submit", usarEndereco);
-    document.getElementById("botao-fechar-pedido").addEventListener("click", fecharPedido);
-
     document.getElementById("so-abertas").addEventListener("change", (evento) => {
         estado.soAbertas = evento.target.checked;
         desenharLista();
@@ -436,7 +458,7 @@ function cartao(r, pedidos, menorTotal) {
         if (tirar) { alternarItem(tirar.dataset.tirar); return; }
 
         const voltar = evento.target.closest("[data-voltar]");
-        if (voltar) abrirPasso(voltar.dataset.voltar);
+        if (voltar) abrirPasso();
     });
 
     try {
