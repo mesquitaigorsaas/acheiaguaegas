@@ -27,16 +27,23 @@
     gap: 12px;
 }
 
+/* Altura travada e largura automática: a logo é deitada, e travar a
+   largura a deformaria no dia em que o desenho mudar. */
 .marca {
-    font-family: var(--titulo);
-    font-size: 19px;
-    font-weight: 700;
-    letter-spacing: -.4px;
+    display: block;
     margin-right: auto;
+    line-height: 0;
 }
 
-.marca .agua { color: var(--agua); }
-.marca .gas  { color: var(--gas); }
+.marca img {
+    height: 40px;
+    width: auto;
+}
+
+@media (max-width: 420px) {
+    /* No celular estreito o link de anunciar disputa espaço com ela. */
+    .marca img { height: 32px; }
+}
 
 .link-anunciar {
     font-size: 14px;

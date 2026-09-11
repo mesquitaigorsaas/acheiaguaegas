@@ -1,0 +1,12 @@
+A logo do Achei Água & Gás, a nossa marca.
+
+Fica separada das logos das revendas, que o dono envia pelo painel e
+vão para o Storage do Supabase. Misturar as duas é o caminho para a
+logo de um cliente aparecer no topo do site.
+
+Nome esperado pelo código: achei-agua-e-gas.png
+
+Fundo transparente, porque ela aparece sobre branco no topo.
+Altura de uns 200 pixels basta: na tela ela sai com 34.
+
+Se trocar por .svg, avise: o endereço está escrito no index.html.
