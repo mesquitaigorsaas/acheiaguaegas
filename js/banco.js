@@ -27,8 +27,8 @@
 */
 
 const BANCO = {
-    url: "",
-    chavePublica: ""
+    url: "https://mqrcvemdhlyjufvwhvke.supabase.co",
+    chavePublica: "sb_publishable_nrEnr1HRZ0iHQyJRqvHOaA_mPGbCCtS"
 };
 
 
