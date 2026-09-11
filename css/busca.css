@@ -412,3 +412,85 @@
     .revenda .logo { width: 48px; height: 48px; }
     .revenda .preco { grid-column: 2; text-align: left; }
 }
+
+
+/* ==========================================
+   O PEDIDO SENDO MONTADO
+
+   Fica logo abaixo dos itens, dentro do mesmo passo. Numa caixa
+   separada, lá embaixo, ele sairia do campo de visão de quem está
+   escolhendo — e a pessoa não veria que o gás já entrou antes de ir
+   marcar a água.
+========================================== */
+
+.meu-pedido {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 18px;
+    padding: 14px;
+    background: var(--agua-clara);
+    border: 1px solid #bfdffd;
+    border-radius: var(--raio);
+}
+
+.rotulo-pedido {
+    width: 100%;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--agua-escura);
+}
+
+/* Cada item marcado vira uma ficha com um X. Tirar tem de ser tão
+   fácil quanto pôr: quem marcou o item errado desiste do site se
+   precisar recomeçar. */
+.ficha {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--papel);
+    border: 1.5px solid var(--agua);
+    border-radius: 999px;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--marinho);
+    cursor: pointer;
+}
+
+.ficha span { color: var(--tinta-fraca); font-size: 17px; line-height: 1; }
+.ficha:hover span { color: var(--vermelho); }
+
+#botao-fechar-pedido { margin-top: 14px; }
+
+
+/* O detalhamento por item, quando o pedido tem mais de um. Com um só,
+   ele repetiria o total logo ao lado. */
+.detalhe-itens {
+    grid-column: 1 / -1;
+    margin-top: 2px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--linha);
+    font-size: 14px;
+}
+
+.detalhe-itens li {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 3px 0;
+    color: var(--tinta-fraca);
+}
+
+.detalhe-itens li span { font-weight: 600; color: var(--tinta); }
+
+/* O que ela não vende fica riscado, e não escondido: é essa a
+   informação que faz a pessoa decidir entre pedir tudo aqui ou
+   dividir em dois lugares. */
+.detalhe-itens li.falta { text-decoration: line-through; opacity: .65; }
+.detalhe-itens li.falta span { text-decoration: none; font-weight: 400; }
+
+.selo.incompleta { background: var(--gas-clara); color: #a8560a; }

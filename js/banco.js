@@ -89,12 +89,12 @@ async function carregarCatalogo() {
  * Na demonstração, a mesma conta é feita aqui. O resultado tem os
  * mesmos campos, na mesma ordem.
  */
-async function buscarRevendas(lat, lng, itemId, raioMax = 30) {
+async function buscarRevendas(lat, lng, idsDosItens, raioMax = 30) {
     if (temBanco()) {
         const { data, error } = await conectar().rpc("buscar", {
             p_lat: lat,
             p_lon: lng,
-            p_item: itemId,
+            p_itens: idsDosItens,
             p_raio_max: raioMax
         });
 
@@ -102,18 +102,29 @@ async function buscarRevendas(lat, lng, itemId, raioMax = 30) {
         return data || [];
     }
 
-    return buscarNaDemonstracao(lat, lng, itemId, raioMax);
+    return buscarNaDemonstracao(lat, lng, idsDosItens, raioMax);
 }
 
 
-async function buscarNaDemonstracao(lat, lng, itemId, raioMax) {
+async function buscarNaDemonstracao(lat, lng, idsDosItens, raioMax) {
     const dados = await lerDemo();
     const agora = new Date();
+    const pedidos = idsDosItens.length;
 
     return dados.revendas
         .map((r) => {
-            const preco = r.precos[itemId];
-            if (preco === undefined) return null;
+            const precos = {};
+            let total = 0;
+
+            idsDosItens.forEach((id) => {
+                const p = r.precos[id];
+                if (p === undefined) return;
+                precos[id] = p;
+                total += p;
+            });
+
+            const achados = Object.keys(precos).length;
+            if (!achados) return null;
 
             const km = distanciaEmKm(lat, lng, r.latitude, r.longitude);
             if (km === null) return null;
@@ -131,17 +142,20 @@ async function buscarNaDemonstracao(lat, lng, itemId, raioMax) {
                 endereco: r.endereco,
                 distancia_km: Math.round(km * 100) / 100,
                 aberta: estaAberta(r.horarios, agora),
-                preco: preco,
-                preco_visto_em: null
+                itens_encontrados: achados,
+                total: Math.round(total * 100) / 100,
+                precos: precos
             };
         })
         .filter(Boolean)
-        // Aberta primeiro, depois preço, depois distância. Gás fechado
-        // não serve a quem quer hoje; e preço vem antes de distância
-        // porque é por isso que a pessoa entrou num site de comparação.
+        // Tem tudo, depois aberta, depois a mais perto. A mesma ordem da
+        // função do banco, e pelos mesmos motivos: o pedido inteiro numa
+        // entrega só é o que justifica a lista de itens; gás fechado não
+        // serve a quem quer hoje; e quem está com o botijão vazio quer o
+        // mais rápido. O preço aparece, mas não ordena.
         .sort((a, b) =>
-            (b.aberta - a.aberta)
-            || (a.preco - b.preco)
+            ((b.itens_encontrados === pedidos) - (a.itens_encontrados === pedidos))
+            || (b.aberta - a.aberta)
             || (a.distancia_km - b.distancia_km));
 }
 

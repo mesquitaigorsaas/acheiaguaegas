@@ -1,14 +1,14 @@
 // ==========================================
 // ACHEI ÁGUA & GÁS
 // Arquivo: busca.js
-// Versão: 1.0
+// Versão: 2.0
 // ==========================================
 
 /*
    A tela do cliente, em três passos na mesma página.
 
      1. onde você está
-     2. o que você quer
+     2. o que você quer — um item ou vários
      3. quem entrega aí
 
    O passo de baixo só aparece quando o de cima está respondido, e o
@@ -16,6 +16,11 @@
    de propósito: endereço errado é o erro mais comum aqui, e o mais
    caro, já que decide a lista inteira. Voltar para corrigir não pode
    custar uma navegação.
+
+   O PEDIDO É UMA LISTA, e não um item só. Quem está com o botijão
+   vazio muitas vezes está com o galão vazio também, e comprar os dois
+   na mesma revenda é uma entrega em vez de duas. Marca o gás, marca a
+   água, e fecha o pedido.
 
    O que a pessoa respondeu fica guardado no navegador. Quem pede gás
    pede de novo do mesmo lugar, e digitar o endereço toda vez é o tipo
@@ -26,8 +31,8 @@ const GUARDADO = "achei-agua-gas:onde";
 
 const estado = {
     onde: null,   // { lat, lng, escrito }
-    tipo: null,   // "gas" ou "agua"
-    item: null    // { id, nome, apelido }
+    tipo: "gas",  // a aba aberta: "gas" ou "agua"
+    pedido: []    // os itens marcados, na ordem em que foram marcados
 };
 
 let catalogo = [];
@@ -125,7 +130,7 @@ function definirOnde(onde) {
     fecharPasso("passo-onde");
     document.getElementById("passo-oque").hidden = false;
 
-    if (estado.item) procurar();
+    if (estado.pedido.length) procurar();
 }
 
 
@@ -133,36 +138,81 @@ function definirOnde(onde) {
    PASSO 2 — O QUE VOCÊ QUER
 ========================================== */
 
-function escolherTipo(tipo) {
+/**
+ * Troca a aba entre gás e água. NÃO limpa o que já foi marcado: é
+ * justamente para poder pedir os dois que as duas abas existem.
+ */
+function abrirTipo(tipo) {
     estado.tipo = tipo;
-    estado.item = null;
 
     document.querySelectorAll(".tipo").forEach((b) => {
         b.classList.toggle("escolhido", b.dataset.tipo === tipo);
     });
 
-    const doTipo = catalogo.filter((i) => i.tipo === tipo);
-
-    document.getElementById("itens").innerHTML = doTipo.map((i) => `
-        <button type="button" class="item-botao" data-item="${esc(i.id)}">${esc(i.apelido || i.nome)}</button>
-    `).join("");
-
-    // Um item só no tipo não merece pergunta: escolhe sozinho e vai
-    // direto para a lista.
-    if (doTipo.length === 1) escolherItem(doTipo[0].id);
+    document.getElementById("itens").innerHTML = catalogo
+        .filter((i) => i.tipo === tipo)
+        .map((i) => `
+            <button type="button" class="item-botao${noPedido(i.id) ? " escolhido" : ""}" data-item="${esc(i.id)}">
+                ${esc(i.apelido || i.nome)}
+            </button>
+        `).join("");
 }
 
 
-function escolherItem(id) {
-    estado.item = catalogo.find((i) => i.id === id) || null;
-    if (!estado.item) return;
+function noPedido(id) {
+    return estado.pedido.some((i) => i.id === id);
+}
 
-    document.querySelectorAll(".item-botao").forEach((b) => {
-        b.classList.toggle("escolhido", b.dataset.item === id);
-    });
+
+/** Marca ou desmarca. Clicar de novo no que já está no pedido tira. */
+function alternarItem(id) {
+    const item = catalogo.find((i) => i.id === id);
+    if (!item) return;
+
+    if (noPedido(id)) {
+        estado.pedido = estado.pedido.filter((i) => i.id !== id);
+    } else {
+        estado.pedido.push(item);
+    }
+
+    abrirTipo(estado.tipo);
+    desenharPedido();
+}
+
+
+function desenharPedido() {
+    const caixa = document.getElementById("meu-pedido");
+    const botao = document.getElementById("botao-fechar-pedido");
+
+    if (!estado.pedido.length) {
+        caixa.hidden = true;
+        botao.hidden = true;
+        return;
+    }
+
+    caixa.hidden = false;
+    botao.hidden = false;
+
+    caixa.innerHTML = "<span class='rotulo-pedido'>Seu pedido</span>"
+        + estado.pedido.map((i) => `
+            <button type="button" class="ficha" data-tirar="${esc(i.id)}"
+                    title="Tirar do pedido">
+                ${esc(i.apelido || i.nome)} <span aria-hidden="true">&times;</span>
+            </button>
+        `).join("");
+
+    botao.textContent = estado.pedido.length === 1
+        ? "Ver quem entrega"
+        : "Fechar pedido e ver quem entrega";
+}
+
+
+function fecharPedido() {
+    if (!estado.pedido.length) return;
 
     document.getElementById("resumo-oque").innerHTML =
-        esc(estado.item.nome) + "<small>" + (estado.tipo === "gas" ? "Gás" : "Água") + "</small>";
+        esc(estado.pedido.map((i) => i.apelido || i.nome).join(" + "))
+        + "<small>" + estado.pedido.length + (estado.pedido.length === 1 ? " item" : " itens") + "</small>";
 
     fecharPasso("passo-oque");
     procurar();
@@ -178,13 +228,9 @@ function fecharPasso(id) {
 }
 
 function abrirPasso(qual) {
-    if (qual === "onde") {
-        document.getElementById("passo-onde").classList.remove("pronto");
-        document.getElementById("passo-onde").scrollIntoView({ behavior: "smooth", block: "start" });
-        return;
-    }
-    document.getElementById("passo-oque").classList.remove("pronto");
-    document.getElementById("passo-oque").scrollIntoView({ behavior: "smooth", block: "start" });
+    const id = qual === "onde" ? "passo-onde" : "passo-oque";
+    document.getElementById(id).classList.remove("pronto");
+    document.getElementById(id).scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 
@@ -193,7 +239,7 @@ function abrirPasso(qual) {
 ========================================== */
 
 async function procurar() {
-    if (!estado.onde || !estado.item) return;
+    if (!estado.onde || !estado.pedido.length) return;
 
     const secao = document.getElementById("resultados");
     const lista = document.getElementById("lista");
@@ -203,8 +249,8 @@ async function procurar() {
     lista.innerHTML = `<div class="vazio"><p>Procurando...</p></div>`;
 
     try {
-        const achados = await buscarRevendas(estado.onde.lat, estado.onde.lng, estado.item.id);
-        desenharLista(achados);
+        const ids = estado.pedido.map((i) => i.id);
+        desenharLista(await buscarRevendas(estado.onde.lat, estado.onde.lng, ids));
     } catch (erro) {
         console.error("Erro na busca:", erro);
         lista.innerHTML = `
@@ -219,12 +265,13 @@ async function procurar() {
 function desenharLista(achados) {
     const lista = document.getElementById("lista");
     const contagem = document.getElementById("contagem");
+    const pedidos = estado.pedido.length;
 
     if (!achados.length) {
         contagem.textContent = "";
         lista.innerHTML = `
             <div class="vazio">
-                <h3>Ninguém entrega ${esc(estado.item.apelido || estado.item.nome)} aí ainda</h3>
+                <h3>Ninguém entrega isso aí ainda</h3>
                 <p>
                     O site é novo e as revendas estão entrando aos poucos.
                     Se você conhece uma que entrega no seu endereço, indique
@@ -239,25 +286,50 @@ function desenharLista(achados) {
         ? "1 revenda"
         : achados.length + " revendas, " + abertas + " abertas agora";
 
-    // O selo de mais barata vale entre as ABERTAS. Apontar a mais
-    // barata de todas quando ela está fechada manda a pessoa para
-    // um telefone que ninguém atende.
-    const menorAberta = Math.min(...achados.filter((r) => r.aberta).map((r) => Number(r.preco)));
+    // O selo de mais barata vale entre as que estão ABERTAS e têm o
+    // pedido INTEIRO. Apontar a mais barata de todas quando ela está
+    // fechada manda a pessoa para um telefone que ninguém atende; e
+    // apontar quem só tem metade compara preços de coisas diferentes.
+    const completasAbertas = achados.filter((r) => r.aberta && r.itens_encontrados === pedidos);
+    const menorTotal = completasAbertas.length
+        ? Math.min(...completasAbertas.map((r) => Number(r.total)))
+        : null;
 
-    lista.innerHTML = achados.map((r, i) => cartao(r, i === 0, Number(r.preco) === menorAberta && r.aberta)).join("");
+    lista.innerHTML = achados
+        .map((r) => cartao(r, pedidos, menorTotal))
+        .join("");
 }
 
 
-function cartao(r, primeira, maisBarata) {
+function cartao(r, pedidos, menorTotal) {
+    const completa = r.itens_encontrados === pedidos;
+    const maisBarata = completa && r.aberta && Number(r.total) === menorTotal;
+
     const zap = numeroDeZap(r.whatsapp);
-    const texto = `Olá! Vi no Achei Água & Gás. Você entrega ${estado.item.nome} aqui?`;
+
+    // Os itens que ELA tem, e não os que a pessoa pediu: mandar no
+    // WhatsApp um item que a revenda não vende começa a conversa com
+    // uma recusa.
+    const temEstes = estado.pedido.filter((i) => r.precos && r.precos[i.id] !== undefined);
+    const texto = "Olá! Vi no Achei Água & Gás. Você entrega "
+        + temEstes.map((i) => i.nome).join(" e ") + " aqui?";
 
     const logo = r.logo_url
         ? `<img class="logo" src="${esc(r.logo_url)}" alt="" loading="lazy">`
-        : `<div class="logo logo-vazia" aria-hidden="true">${estado.tipo === "gas" ? "🔥" : "💧"}</div>`;
+        : `<div class="logo logo-vazia" aria-hidden="true">${estado.pedido.some((i) => i.tipo === "gas") ? "🔥" : "💧"}</div>`;
+
+    // Com um item só, o detalhamento repetiria o total logo ao lado.
+    const detalhe = pedidos > 1
+        ? `<ul class="detalhe-itens">` + estado.pedido.map((i) => {
+            const p = r.precos ? r.precos[i.id] : undefined;
+            return p === undefined
+                ? `<li class="falta">${esc(i.apelido || i.nome)}<span>não vende</span></li>`
+                : `<li>${esc(i.apelido || i.nome)}<span>${esc(dinheiro(p))}</span></li>`;
+          }).join("") + `</ul>`
+        : "";
 
     return `
-        <article class="revenda${primeira && r.aberta ? " melhor" : ""}${r.aberta ? "" : " fechada"}">
+        <article class="revenda${maisBarata ? " melhor" : ""}${r.aberta ? "" : " fechada"}">
             ${logo}
 
             <div class="miolo">
@@ -265,14 +337,17 @@ function cartao(r, primeira, maisBarata) {
                 <div class="linha-selos">
                     <span class="selo ${r.aberta ? "aberta" : "fechada"}">${r.aberta ? "Aberta agora" : "Fechada"}</span>
                     ${maisBarata ? '<span class="selo mais-barata">Mais barata</span>' : ""}
+                    ${completa ? "" : `<span class="selo incompleta">Tem ${r.itens_encontrados} de ${pedidos}</span>`}
                     <span>${esc(kmEscrito(r.distancia_km) || "")}</span>
                 </div>
             </div>
 
             <div class="preco">
-                ${esc(dinheiro(r.preco))}
-                <small>${esc(estado.item.apelido || estado.item.nome)}</small>
+                ${esc(dinheiro(r.total))}
+                <small>${pedidos > 1 ? "total" : esc(estado.pedido[0].apelido || estado.pedido[0].nome)}</small>
             </div>
+
+            ${detalhe}
 
             <div class="acao-revenda">
                 <a class="botao botao-zap" href="https://wa.me/${esc(zap)}?text=${encodeURIComponent(texto)}"
@@ -292,13 +367,17 @@ function cartao(r, primeira, maisBarata) {
 (async function iniciar() {
     document.getElementById("botao-gps").addEventListener("click", usarGps);
     document.getElementById("form-endereco").addEventListener("submit", usarEndereco);
+    document.getElementById("botao-fechar-pedido").addEventListener("click", fecharPedido);
 
     document.addEventListener("click", (evento) => {
         const tipo = evento.target.closest("[data-tipo]");
-        if (tipo) { escolherTipo(tipo.dataset.tipo); return; }
+        if (tipo) { abrirTipo(tipo.dataset.tipo); return; }
 
         const item = evento.target.closest("[data-item]");
-        if (item) { escolherItem(item.dataset.item); return; }
+        if (item) { alternarItem(item.dataset.item); return; }
+
+        const tirar = evento.target.closest("[data-tirar]");
+        if (tirar) { alternarItem(tirar.dataset.tirar); return; }
 
         const voltar = evento.target.closest("[data-voltar]");
         if (voltar) abrirPasso(voltar.dataset.voltar);
@@ -311,6 +390,8 @@ function cartao(r, primeira, maisBarata) {
         avisar("Não consegui carregar a lista de produtos. Recarregue a página.", "erro");
         return;
     }
+
+    abrirTipo("gas");
 
     // Quem já disse onde mora não precisa dizer de novo.
     try {

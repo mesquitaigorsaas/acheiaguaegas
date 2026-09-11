@@ -287,8 +287,14 @@ $$;
 -- ------------------------------------------------------------
 -- A BUSCA — o coração do site
 --
--- Devolve quem entrega no ponto informado, com a distância, se
--- está aberta e quanto cobra pelo item pedido.
+-- Recebe uma LISTA de itens, e não um só. Quem está com o
+-- botijão vazio muitas vezes também está com o galão vazio, e
+-- fazer duas buscas para pedir de uma revenda só é trabalho que
+-- o site deveria poupar.
+--
+-- Devolve, por revenda: a distância, se está aberta, quantos dos
+-- itens pedidos ela tem, o total desses, e o preço de cada um
+-- para a tela poder detalhar.
 --
 -- É uma FUNÇÃO, e não uma consulta direta à tabela, de propósito.
 -- Com leitura livre em `revendas`, qualquer visitante baixaria a
@@ -296,57 +302,78 @@ $$;
 -- de clientes do negócio servida a um concorrente. Aqui só sai o
 -- que cabe numa tela de busca, e só para quem informou onde está.
 --
--- A ordem é: aberta primeiro, depois preço, depois distância.
--- Aberta primeiro porque gás fechado não serve a quem quer hoje;
--- preço antes de distância porque é por isso que a pessoa entrou
--- num site de comparação.
+-- A ORDEM é: tem tudo, depois aberta, depois a mais perto.
+--
+-- Tem tudo primeiro porque o pedido inteiro numa entrega só é o
+-- motivo de existir a lista de itens. Aberta em seguida porque
+-- gás fechado não serve a quem quer hoje. E perto por último
+-- entre os empatados, porque é isso que a pessoa com o botijão
+-- vazio quer: o mais rápido.
+--
+-- O PREÇO NÃO ORDENA. Ele aparece, e a tela marca a mais barata,
+-- mas quem escolhe entre economizar cinco reais e esperar menos
+-- é o cliente, não nós.
 -- ------------------------------------------------------------
 create or replace function buscar(
-  p_lat   numeric,
-  p_lon   numeric,
-  p_item  uuid,
+  p_lat      numeric,
+  p_lon      numeric,
+  p_itens    uuid[],
   p_raio_max numeric default 30
 )
 returns table (
-  revenda_id   uuid,
-  nome         text,
-  logo_url     text,
-  whatsapp     text,
-  endereco     text,
-  distancia_km numeric,
-  aberta       boolean,
-  preco        numeric,
-  preco_visto_em timestamptz
+  revenda_id        uuid,
+  nome              text,
+  logo_url          text,
+  whatsapp          text,
+  endereco          text,
+  distancia_km      numeric,
+  aberta            boolean,
+  itens_encontrados integer,
+  total             numeric,
+  precos            jsonb
 )
 language sql
 stable
 security definer
 set search_path = public
 as $$
+  with perto as (
+    select r.*, distancia_km(p_lat, p_lon, r.latitude, r.longitude) as km
+      from revendas r
+     where r.publicado
+       and r.assinatura_status = 'ativa'
+       -- Recorte grosseiro primeiro, por um quadrado de latitude e
+       -- longitude. Um grau de latitude tem 111 km. Calcular a
+       -- distância de todas as revendas do país para depois jogar
+       -- fora é trabalho à toa quando o índice resolve antes.
+       and r.latitude  between p_lat - (p_raio_max / 111.0) and p_lat + (p_raio_max / 111.0)
+       and r.longitude between p_lon - (p_raio_max / 111.0) and p_lon + (p_raio_max / 111.0)
+  )
   select
-    r.id,
-    r.nome,
-    r.logo_url,
-    r.whatsapp,
-    r.endereco_texto,
-    distancia_km(p_lat, p_lon, r.latitude, r.longitude),
-    esta_aberta(r.id),
-    p.preco,
-    p.atualizado_em
-  from revendas r
-  join precos p on p.revenda_id = r.id and p.item_id = p_item and p.disponivel
-  where r.publicado
-    and r.assinatura_status = 'ativa'
-    -- Recorte grosseiro primeiro, por um quadrado de latitude e
-    -- longitude. Um grau de latitude tem 111 km. Calcular a
-    -- distância de todas as revendas do país para depois jogar
-    -- fora é trabalho à toa quando o índice resolve antes.
-    and r.latitude  between p_lat - (p_raio_max / 111.0) and p_lat + (p_raio_max / 111.0)
-    and r.longitude between p_lon - (p_raio_max / 111.0) and p_lon + (p_raio_max / 111.0)
-    -- Agora a distância de verdade, contra o raio DELA e o teto
-    -- pedido pelo cliente.
-    and distancia_km(p_lat, p_lon, r.latitude, r.longitude) <= least(r.raio_entrega_km, p_raio_max)
-  order by esta_aberta(r.id) desc, p.preco asc, 6 asc;
+    p.id,
+    p.nome,
+    p.logo_url,
+    p.whatsapp,
+    p.endereco_texto,
+    p.km,
+    esta_aberta(p.id),
+    count(pr.item_id)::integer,
+    coalesce(sum(pr.preco), 0),
+    coalesce(jsonb_object_agg(pr.item_id, pr.preco) filter (where pr.item_id is not null), '{}'::jsonb)
+  from perto p
+  join precos pr
+    on pr.revenda_id = p.id
+   and pr.item_id = any (p_itens)
+   and pr.disponivel
+  -- O corte é pelo MENOR entre o raio dela e o teto pedido: quem
+  -- está a oito quilômetros e entrega em dez atende; quem está a
+  -- dois e entrega em um, não.
+  where p.km <= least(p.raio_entrega_km, p_raio_max)
+  group by p.id, p.nome, p.logo_url, p.whatsapp, p.endereco_texto, p.km, p.raio_entrega_km
+  order by
+    count(pr.item_id) = array_length(p_itens, 1) desc,
+    esta_aberta(p.id) desc,
+    p.km asc;
 $$;
 
 comment on function buscar is 'A busca do cliente. Única porta de leitura das revendas para quem não está logado.';
