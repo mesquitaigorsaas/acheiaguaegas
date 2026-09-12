@@ -209,7 +209,7 @@ function telaPrecos() {
                 <div class="campo-preco">
                     <span>R$</span>
                     <input type="text" inputmode="decimal" data-preco="${esc(item.id)}"
-                           value="${tem ? esc(String(p.preco).replace(".", ",")) : ""}"
+                           value="${tem ? esc(comoSeDigita(p.preco)) : ""}"
                            placeholder="0,00">
                 </div>
 
@@ -241,6 +241,20 @@ function telaPrecos() {
             </div>
         </section>
     `;
+}
+
+
+/**
+ * 97.5 vira "97,50".
+ *
+ * Sempre com as duas casas, porque "97,5" num campo de preço parece
+ * digitação pela metade — e quem abre esta tela para conferir o preço
+ * do botijão repara nisso antes de reparar em qualquer outra coisa.
+ */
+function comoSeDigita(valor) {
+    const n = Number(valor);
+    if (!Number.isFinite(n)) return "";
+    return n.toFixed(2).replace(".", ",");
 }
 
 
