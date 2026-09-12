@@ -322,42 +322,55 @@ function horarioDe(dia, tipo) {
 
 
 function telaHorarios() {
-    const linhaTipo = (dia, tipo, rotulo) => {
-        const h = horarioDe(dia, tipo);
-        return `
-            <div class="tipo-horario${h.fechado ? " fechado" : ""}" data-h="${dia}-${tipo}">
-                <span class="rotulo-tipo">${esc(rotulo)}</span>
+    /*
+       Duas colunas, uma por tipo de atendimento, cada uma com os sete
+       dias. Lado a lado no computador, empilhadas no celular.
 
-                <div class="horas">
-                    <input type="time" data-campo="abre" value="${esc(String(h.abre).slice(0, 5))}">
-                    <span class="ate">até</span>
-                    <input type="time" data-campo="fecha" value="${esc(String(h.fecha).slice(0, 5))}">
-                </div>
+       Antes era um bloco por dia com as duas linhas dentro. Parecia
+       econômico e era pior: quem vai cadastrar horário está pensando em
+       UM assunto de cada vez — "a entrega funciona assim" — e ter de
+       pular a linha da retirada a cada dia obriga a trocar de assunto
+       catorze vezes.
+    */
+    const coluna = (tipo, titulo, explica) => `
+        <div class="coluna-horario">
+            <h3 class="titulo-coluna">${esc(titulo)}</h3>
+            <p class="explica-coluna">${esc(explica)}</p>
 
-                <label class="fecha-hoje">
-                    <input type="checkbox" data-campo="fechado" ${h.fechado ? "checked" : ""}>
-                    Não atende
-                </label>
-            </div>
-        `;
-    };
+            <button type="button" class="botao-vazio botao-miudo" data-copiar="${esc(tipo)}">
+                Repetir a segunda nos outros dias
+            </button>
 
-    const dias = ORDEM_NA_TELA.map((dia) => `
-        <div class="dia-bloco">
-            <h3>${esc(DIAS[dia])}</h3>
-            ${linhaTipo(dia, "entrega", "Entrega")}
-            ${linhaTipo(dia, "retirada", "Retirada no balcão")}
+            ${ORDEM_NA_TELA.map((dia) => {
+                const h = horarioDe(dia, tipo);
+                return `
+                    <div class="dia-linha${h.fechado ? " fechado" : ""}" data-h="${dia}-${tipo}">
+                        <span class="nome-dia">${esc(DIAS[dia])}</span>
+
+                        <div class="horas">
+                            <input type="time" data-campo="abre" value="${esc(String(h.abre).slice(0, 5))}">
+                            <span class="ate">até</span>
+                            <input type="time" data-campo="fecha" value="${esc(String(h.fecha).slice(0, 5))}">
+                        </div>
+
+                        <label class="fecha-hoje">
+                            <input type="checkbox" data-campo="fechado" ${h.fechado ? "checked" : ""}>
+                            Não atende
+                        </label>
+                    </div>
+                `;
+            }).join("")}
         </div>
-    `).join("");
+    `;
 
     return `
         <section class="secao">
             <h2>Horários</h2>
             <p class="explica">
-                Entrega e balcão têm horários separados de propósito:
-                na vida real o balcão abre mais cedo, e a entrega para
-                antes. Quem pede entrega vê se a ENTREGA está
-                funcionando, não se a loja está aberta.
+                Retirada e entrega são separadas de propósito: na vida
+                real o balcão abre mais cedo e a entrega para antes. Quem
+                pede entrega vê se a ENTREGA está funcionando, não se a
+                loja está aberta.
             </p>
             <p class="explica">
                 Fecha antes de abre quer dizer que atravessa a
@@ -365,16 +378,10 @@ function telaHorarios() {
                 noite, ponha 00:00 nos dois.
             </p>
 
-            <div class="atalhos">
-                <button type="button" class="botao-vazio botao-miudo" data-copiar="seg">
-                    Repetir segunda em todos os dias
-                </button>
-                <button type="button" class="botao-vazio botao-miudo" data-copiar="util">
-                    Repetir segunda de segunda a sexta
-                </button>
+            <div class="duas-colunas">
+                ${coluna("retirada", "Dia e horário de retirada", "Quando o cliente pode ir buscar no balcão.")}
+                ${coluna("entrega",  "Dia e horário de entrega",  "Quando você leva até o endereço do cliente.")}
             </div>
-
-            ${dias}
 
             <div class="barra-salvar">
                 <button type="button" class="botao" data-salvar="horarios">Salvar horários</button>
@@ -399,26 +406,29 @@ function lerHorariosDaTela() {
 
 
 /**
- * Copia a segunda para os outros dias.
+ * Copia a segunda para os outros dias, dentro de UMA coluna.
  *
- * Catorze pares de horário digitados um a um é onde o dono desiste do
- * cadastro. A esmagadora maioria repete o mesmo horário a semana toda,
- * e os que não repetem só corrigem o sábado depois.
+ * Sete pares de hora digitados um a um, vezes duas colunas, é onde o
+ * dono desiste do cadastro. A esmagadora maioria repete o mesmo horário
+ * a semana toda e só corrige o sábado e o domingo depois.
+ *
+ * Vale por coluna, e não para as duas de uma vez, porque a entrega e o
+ * balcão quase nunca têm o mesmo horário — copiar os dois juntos daria
+ * o trabalho de desfazer.
  */
-function copiarSegunda(ate) {
+function copiarSegunda(tipo) {
     const atuais = lerHorariosDaTela();
-    const molde = {};
+    const molde = atuais.find((h) => h.dia === 1 && h.tipo === tipo);
+    if (!molde) return;
 
-    atuais.filter((h) => h.dia === 1).forEach((h) => { molde[h.tipo] = h; });
-
-    horarios = atuais.map((h) => {
-        const alvo = ate === "util" ? h.dia >= 1 && h.dia <= 5 : true;
-        if (!alvo || !molde[h.tipo]) return h;
-        return { ...h, abre: molde[h.tipo].abre, fecha: molde[h.tipo].fecha, fechado: molde[h.tipo].fechado };
-    });
+    horarios = atuais.map((h) =>
+        h.tipo === tipo
+            ? { ...h, abre: molde.abre, fecha: molde.fecha, fechado: molde.fechado }
+            : h
+    );
 
     abrirAba("horarios");
-    avisar("Copiado. Confira o sábado e o domingo antes de salvar.");
+    avisar("Copiado na coluna de " + (tipo === "entrega" ? "entrega" : "retirada") + ". Confira o sábado e o domingo.");
 }
 
 

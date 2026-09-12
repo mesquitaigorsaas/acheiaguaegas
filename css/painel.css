@@ -239,57 +239,70 @@ body.tela-painel { background: var(--fundo); }
 /* ==========================================
    HORÁRIOS
 
-   Um bloco por dia, e dentro dele duas linhas: entrega e balcão.
-   Catorze pares de hora numa tela só é muita coisa, então cada dia vira
-   um cartão com nome próprio — a pessoa acha o sábado sem contar
-   linhas.
+   Duas colunas, uma por tipo de atendimento, cada uma com os sete dias.
+   Lado a lado no computador e empilhadas no celular.
+
+   Quem vai cadastrar horário está pensando em UM assunto de cada vez —
+   "a entrega funciona assim". Misturar as duas linhas dentro do mesmo
+   dia obrigava a trocar de assunto catorze vezes.
 ========================================== */
 
-.atalhos {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 18px;
+.duas-colunas {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
 }
 
-.atalhos .botao-miudo { min-height: 44px; }
+@media (max-width: 860px) {
+    .duas-colunas { grid-template-columns: 1fr; }
+}
 
-.dia-bloco {
+.coluna-horario {
     border: 1px solid var(--linha);
     border-radius: var(--raio);
-    padding: 14px;
-    margin-bottom: 12px;
+    padding: 16px;
     background: var(--fundo);
 }
 
-.dia-bloco h3 {
+.titulo-coluna {
     font-family: var(--titulo);
-    font-size: 15px;
+    font-size: 16px;
     color: var(--marinho);
-    margin-bottom: 10px;
 }
 
-.tipo-horario {
+.explica-coluna {
+    font-size: 13.5px;
+    color: var(--tinta-fraca);
+    margin: 2px 0 12px;
+}
+
+.coluna-horario .botao-miudo {
+    width: 100%;
+    min-height: 44px;
+    margin-bottom: 14px;
+}
+
+.dia-linha {
     display: grid;
-    grid-template-columns: 130px 1fr auto;
-    gap: 10px;
+    grid-template-columns: 1fr auto;
+    gap: 6px 10px;
     align-items: center;
-    padding: 8px 0;
+    padding: 10px 0;
+    border-top: 1px solid var(--linha);
 }
-
-.tipo-horario + .tipo-horario { border-top: 1px dashed var(--linha); }
 
 /* O dia sem atendimento apaga inteiro, e as horas continuam à vista.
    Some, e o dono acha que perdeu o que tinha digitado. */
-.tipo-horario.fechado { opacity: .5; }
+.dia-linha.fechado { opacity: .5; }
 
-.rotulo-tipo {
+.nome-dia {
     font-size: 14px;
     font-weight: 600;
-    color: var(--tinta-fraca);
+    color: var(--marinho);
 }
 
 .horas {
+    grid-column: 1 / -1;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -315,23 +328,14 @@ body.tela-painel { background: var(--fundo); }
     display: flex;
     align-items: center;
     gap: 7px;
-    font-size: 13.5px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--tinta-fraca);
     cursor: pointer;
     white-space: nowrap;
 }
 
-.fecha-hoje input { width: 20px; height: 20px; accent-color: var(--vermelho); }
-
-@media (max-width: 620px) {
-    .tipo-horario {
-        grid-template-columns: 1fr auto;
-        row-gap: 8px;
-    }
-    .rotulo-tipo { grid-column: 1 / -1; }
-    .horas { grid-column: 1; }
-}
+.fecha-hoje input { width: 19px; height: 19px; accent-color: var(--vermelho); }
 
 
 /* ==========================================
