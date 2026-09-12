@@ -158,14 +158,12 @@ async function buscarNaDemonstracao(lat, lng, idsDosItens, modo, raioMax) {
             };
         })
         .filter(Boolean)
-        // Tem tudo, depois aberta, depois a mais perto. A mesma ordem da
-        // função do banco, e pelos mesmos motivos: o pedido inteiro numa
-        // entrega só é o que justifica a lista de itens; gás fechado não
-        // serve a quem quer hoje; e quem está com o botijão vazio quer o
-        // mais rápido. O preço aparece, mas não ordena.
+        // Tem tudo, depois a mais perto. A mesma ordem da função do
+        // banco. Estar aberta não entra: horário de revenda muda, e
+        // jogar a mais perto para o fim por causa de um cadastro
+        // desatualizado esconde quem resolveria o problema.
         .sort((a, b) =>
             ((b.itens_encontrados === pedidos) - (a.itens_encontrados === pedidos))
-            || (b.aberta - a.aberta)
             || (a.distancia_km - b.distancia_km));
 }
 

@@ -334,13 +334,18 @@ $$;
 -- lista inteira de assinantes com um comando — que é a carteira
 -- de clientes do negócio servida a um concorrente.
 --
--- A ORDEM é: tem tudo, depois aberta, depois a mais perto.
+-- A ORDEM é: tem tudo, depois a mais perto. Só isso.
 --
 -- Tem tudo primeiro porque o pedido inteiro numa entrega só é o
--- motivo de existir a lista de itens. Aberta em seguida porque
--- revenda fechada não atende hoje, e uma a cem metros com a porta
--- fechada não serve a quem está sem gás agora. E perto por
--- último entre os empatados, porque é isso que essa pessoa quer.
+-- motivo de existir a lista de itens. E perto em seguida, porque
+-- é o que quem está sem gás quer.
+--
+-- ESTAR ABERTA NÃO ORDENA, e isso é escolha. Horário de revenda
+-- muda, atrasa, abre no feriado que o cadastro não previu. Jogar
+-- a mais perto para o fim da lista por causa de um horário que
+-- pode estar desatualizado esconde justamente quem resolveria o
+-- problema. O selo diz se está aberta, e quem decide se liga
+-- assim mesmo é o cliente.
 --
 -- O PREÇO NÃO ORDENA. Ele aparece, e a tela marca a mais barata,
 -- mas quem escolhe entre economizar cinco reais e esperar menos
@@ -414,7 +419,6 @@ as $$
            p.faz_entrega, p.faz_retirada
   order by
     count(pr.item_id) = array_length(p_itens, 1) desc,
-    esta_aberta(p.id) desc,
     p.km asc;
 $$;
 

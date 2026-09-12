@@ -40,7 +40,10 @@ const estado = {
     tipo: "gas",      // a aba aberta: "gas" ou "agua"
     pedido: [],       // os itens marcados, na ordem em que foram marcados
     modo: "entrega",  // "entrega" ou "retirada"
-    soAbertas: true   // água e gás é necessidade: quem procura quer agora
+    // Vem DESMARCADO: a lista mostra todo mundo, e o horário é
+    // informação, não corte. Quem quiser ver só quem atende agora
+    // marca a caixa.
+    soAbertas: false
 };
 
 let catalogo = [];
