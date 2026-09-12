@@ -121,7 +121,7 @@ async function situacaoDaConta(idDeAuth) {
 
     const { data: usuario, error } = await banco
         .from("usuarios")
-        .select("id, nome, perfil, ativo, revenda_id, revendas(id, nome, publicado, assinatura_status, assinatura_vencimento, assinatura_link)")
+        .select("id, nome, perfil, ativo, revenda_id, revendas(id, nome, assinatura_status, assinatura_vencimento, assinatura_link)")
         .eq("auth_id", idDeAuth)
         .maybeSingle();
 

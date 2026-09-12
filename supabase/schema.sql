@@ -84,7 +84,8 @@ create table revendas (
   assinatura_status     text not null default 'aguardando_pagamento'
                         check (assinatura_status in ('ativa', 'aguardando_pagamento', 'suspensa', 'cancelada')),
   assinatura_vencimento date,
-  plano                 text not null default 'mensal',
+  plano                 text not null default 'anual'
+                        check (plano in ('mensal', 'anual')),
   assinatura_externa    text,
   assinatura_link       text,
 

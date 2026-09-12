@@ -18,9 +18,10 @@
    busca: sem preço nenhum cadastrado, ela não entra em resultado
    algum, por mais perto que esteja. É também o que muda toda semana.
 
-   No topo, acima das abas, fica o selo de "no ar". É a única coisa que
-   responde à pergunta que o dono realmente tem, que é se o anúncio
-   dele está aparecendo. Escondê-la dentro de uma aba seria escondê-la.
+   No topo, acima das abas, fica o aviso da assinatura, com a data do
+   próximo pagamento. Não existe interruptor de pôr no ar: quem pagou
+   aparece, e vencido some. Um botão a mais era um jeito de o dono ficar
+   invisível sem perceber.
 
    Quem protege os dados é o RLS, no banco. Esta tela só mostra e
    escreve; se alguém a burlar, continua sem tocar em revenda alheia.
@@ -42,7 +43,14 @@ const ABAS = [
     { id: "revenda",  nome: "A revenda" }
 ];
 
-const DIAS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+// Domingo é 0, como no JavaScript e como no banco.
+const DIAS = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
+
+// A ORDEM EM QUE A TELA MOSTRA, que não é a ordem dos números. A semana
+// se lê começando na segunda, e o domingo fecha. Trocar o número do dia
+// para bater com a tela seria o caminho para o erro de um dia; então o
+// número fica como está e só a ordem de exibição muda.
+const ORDEM_NA_TELA = [1, 2, 3, 4, 5, 6, 0];
 
 
 /* ==========================================
@@ -80,7 +88,7 @@ async function carregarTudo() {
     const [c, p, h, r] = await Promise.all([
         banco.from("itens").select("id, tipo, nome, apelido, ordem").eq("ativo", true).order("ordem"),
         banco.from("precos").select("id, item_id, preco, disponivel, atualizado_em"),
-        banco.from("horarios").select("id, rotulo, dias_semana, abre, fecha, ordem").order("ordem"),
+        banco.from("horarios").select("id, dia, tipo, abre, fecha, fechado").order("dia"),
         banco.from("revendas").select("*").eq("id", sessao.revenda.id).single()
     ]);
 
@@ -96,69 +104,38 @@ async function carregarTudo() {
 
 
 /* ==========================================
-   O SELO DE NO AR
+   A ASSINATURA
+
+   Não existe mais interruptor de "pôr no ar". Quem pagou aparece;
+   vencido, some. Um botão a mais era um jeito de o dono ficar
+   invisível sem perceber, e um telefonema a mais para o suporte.
+
+   O medo de pôr no ar uma revenda sem preço se resolveu sozinho: a
+   busca cruza com a tabela de preços, então quem não cadastrou nada
+   não aparece em resultado nenhum.
 ========================================== */
 
-function desenharNoAr() {
+function desenharAssinatura() {
     const cartao = document.getElementById("cartao-no-ar");
     const titulo = document.getElementById("titulo-no-ar");
     const explica = document.getElementById("explica-no-ar");
-    const botao = document.getElementById("botao-publicar");
-
-    const comPreco = precos.filter((p) => p.disponivel).length;
-    const comHorario = horarios.length;
 
     cartao.hidden = false;
-    cartao.className = "cartao-no-ar " + (revenda.publicado ? "sim" : "nao");
+    cartao.className = "cartao-no-ar sim";
 
-    if (revenda.publicado) {
-        titulo.textContent = "A sua revenda está no ar";
-        explica.textContent = "Quem procurar água ou gás perto de você encontra o seu anúncio.";
-        botao.textContent = "Tirar do ar";
-        botao.className = "botao botao-vazio";
-        botao.disabled = false;
-        return;
-    }
+    titulo.textContent = "Assinatura em dia";
 
-    titulo.textContent = "A sua revenda está fora do ar";
-    botao.textContent = "Pôr no ar";
-    botao.className = "botao";
-
-    // Publicar sem preço põe no ar um anúncio que não responde a
-    // ninguém: o cliente clica e não acha o que veio procurar. Sem
-    // horário, ela aparece fechada para sempre, e o dono não descobre
-    // por quê. Os dois freios são do próprio dono, e não punição.
-    const falta = [];
-    if (!comPreco) falta.push("cadastrar pelo menos um preço");
-    if (!comHorario) falta.push("cadastrar o horário");
-
-    if (falta.length) {
-        explica.textContent = "Antes de pôr no ar, falta " + emLista(falta) + ".";
-        botao.disabled = true;
-        return;
-    }
-
-    explica.textContent = "Ninguém encontra o seu anúncio enquanto ele estiver fora do ar.";
-    botao.disabled = false;
+    const vence = revenda.assinatura_vencimento;
+    explica.textContent = vence
+        ? "A sua revenda aparece na busca. Próximo pagamento em " + dataEscrita(vence) + "."
+        : "A sua revenda aparece na busca.";
 }
 
 
-async function alternarPublicado() {
-    const botao = document.getElementById("botao-publicar");
-    botao.disabled = true;
-
-    const novo = !revenda.publicado;
-    const { error } = await conectar().from("revendas").update({ publicado: novo }).eq("id", revenda.id);
-
-    if (error) {
-        avisar("Não consegui mudar agora. Tente de novo.", "erro");
-        botao.disabled = false;
-        return;
-    }
-
-    revenda.publicado = novo;
-    desenharNoAr();
-    avisar(novo ? "Pronto, a sua revenda está no ar." : "A sua revenda saiu do ar.");
+/** 2027-09-12 vira "12/09/2027". */
+function dataEscrita(iso) {
+    const [a, m, d] = String(iso).slice(0, 10).split("-");
+    return d + "/" + m + "/" + a;
 }
 
 
@@ -324,7 +301,6 @@ async function salvarPrecos() {
 
         precos = data;
         avisar("Preços salvos.");
-        desenharNoAr();
         abrirAba("precos");
     } catch (erro) {
         console.error("Erro ao salvar preços:", erro);
@@ -339,35 +315,38 @@ async function salvarPrecos() {
    ABA: HORÁRIOS
 ========================================== */
 
+function horarioDe(dia, tipo) {
+    return horarios.find((h) => h.dia === dia && h.tipo === tipo)
+        || { dia, tipo, abre: "08:00", fecha: "18:00", fechado: true };
+}
+
+
 function telaHorarios() {
-    const faixas = horarios.map((h, i) => `
-        <div class="faixa" data-faixa="${i}">
-            <div class="campo">
-                <label>Nome da faixa</label>
-                <input type="text" data-h="rotulo" value="${esc(h.rotulo)}" placeholder="Segunda a sábado">
-            </div>
+    const linhaTipo = (dia, tipo, rotulo) => {
+        const h = horarioDe(dia, tipo);
+        return `
+            <div class="tipo-horario${h.fechado ? " fechado" : ""}" data-h="${dia}-${tipo}">
+                <span class="rotulo-tipo">${esc(rotulo)}</span>
 
-            <div class="dias">
-                ${DIAS.map((d, n) => `
-                    <label class="dia${(h.dias_semana || []).includes(n) ? " marcado" : ""}">
-                        <input type="checkbox" data-h="dia" data-dia="${n}" ${(h.dias_semana || []).includes(n) ? "checked" : ""}>
-                        ${esc(d.slice(0, 3))}
-                    </label>
-                `).join("")}
-            </div>
-
-            <div class="linha-campos">
-                <div class="campo cresce">
-                    <label>Abre</label>
-                    <input type="time" data-h="abre" value="${esc(String(h.abre).slice(0, 5))}">
+                <div class="horas">
+                    <input type="time" data-campo="abre" value="${esc(String(h.abre).slice(0, 5))}">
+                    <span class="ate">até</span>
+                    <input type="time" data-campo="fecha" value="${esc(String(h.fecha).slice(0, 5))}">
                 </div>
-                <div class="campo cresce">
-                    <label>Fecha</label>
-                    <input type="time" data-h="fecha" value="${esc(String(h.fecha).slice(0, 5))}">
-                </div>
-            </div>
 
-            <button type="button" class="botao-vazio botao-perigo" data-apagar-faixa="${i}">Apagar esta faixa</button>
+                <label class="fecha-hoje">
+                    <input type="checkbox" data-campo="fechado" ${h.fechado ? "checked" : ""}>
+                    Não atende
+                </label>
+            </div>
+        `;
+    };
+
+    const dias = ORDEM_NA_TELA.map((dia) => `
+        <div class="dia-bloco">
+            <h3>${esc(DIAS[dia])}</h3>
+            ${linhaTipo(dia, "entrega", "Entrega")}
+            ${linhaTipo(dia, "retirada", "Retirada no balcão")}
         </div>
     `).join("");
 
@@ -375,19 +354,27 @@ function telaHorarios() {
         <section class="secao">
             <h2>Horários</h2>
             <p class="explica">
-                É o horário que decide se você aparece como aberta. O
-                cliente que procura agora vê primeiro quem está aberto —
-                e a busca já vem filtrando assim.
+                Entrega e balcão têm horários separados de propósito:
+                na vida real o balcão abre mais cedo, e a entrega para
+                antes. Quem pede entrega vê se a ENTREGA está
+                funcionando, não se a loja está aberta.
             </p>
             <p class="explica">
                 Fecha antes de abre quer dizer que atravessa a
-                madrugada. Das 22:00 às 02:00 vira o dia. Para dia e
+                madrugada: das 22:00 às 02:00 vira o dia. Para dia e
                 noite, ponha 00:00 nos dois.
             </p>
 
-            ${faixas || '<p class="vazio-painel">Nenhuma faixa cadastrada. Sem horário, você aparece como fechada o tempo todo.</p>'}
+            <div class="atalhos">
+                <button type="button" class="botao-vazio botao-miudo" data-copiar="seg">
+                    Repetir segunda em todos os dias
+                </button>
+                <button type="button" class="botao-vazio botao-miudo" data-copiar="util">
+                    Repetir segunda de segunda a sexta
+                </button>
+            </div>
 
-            <button type="button" class="botao-vazio" data-nova-faixa>Acrescentar faixa</button>
+            ${dias}
 
             <div class="barra-salvar">
                 <button type="button" class="botao" data-salvar="horarios">Salvar horários</button>
@@ -398,34 +385,45 @@ function telaHorarios() {
 
 
 function lerHorariosDaTela() {
-    return [...document.querySelectorAll("[data-faixa]")].map((caixa) => {
-        const dias = [...caixa.querySelectorAll('[data-h="dia"]')]
-            .filter((c) => c.checked)
-            .map((c) => Number(c.dataset.dia));
-
+    return [...document.querySelectorAll("[data-h]")].map((caixa) => {
+        const [dia, tipo] = caixa.dataset.h.split("-");
         return {
-            rotulo: caixa.querySelector('[data-h="rotulo"]').value.trim() || "Horário",
-            dias_semana: dias,
-            abre: caixa.querySelector('[data-h="abre"]').value,
-            fecha: caixa.querySelector('[data-h="fecha"]').value
+            dia: Number(dia),
+            tipo,
+            abre: caixa.querySelector('[data-campo="abre"]').value || "08:00",
+            fecha: caixa.querySelector('[data-campo="fecha"]').value || "18:00",
+            fechado: caixa.querySelector('[data-campo="fechado"]').checked
         };
     });
 }
 
 
-async function salvarHorarios() {
-    const novas = lerHorariosDaTela();
+/**
+ * Copia a segunda para os outros dias.
+ *
+ * Catorze pares de horário digitados um a um é onde o dono desiste do
+ * cadastro. A esmagadora maioria repete o mesmo horário a semana toda,
+ * e os que não repetem só corrigem o sábado depois.
+ */
+function copiarSegunda(ate) {
+    const atuais = lerHorariosDaTela();
+    const molde = {};
 
-    for (const f of novas) {
-        if (!f.dias_semana.length) {
-            avisar("Cada faixa precisa de pelo menos um dia marcado.", "erro");
-            return;
-        }
-        if (!f.abre || !f.fecha) {
-            avisar("Preencha a hora de abrir e de fechar em todas as faixas.", "erro");
-            return;
-        }
-    }
+    atuais.filter((h) => h.dia === 1).forEach((h) => { molde[h.tipo] = h; });
+
+    horarios = atuais.map((h) => {
+        const alvo = ate === "util" ? h.dia >= 1 && h.dia <= 5 : true;
+        if (!alvo || !molde[h.tipo]) return h;
+        return { ...h, abre: molde[h.tipo].abre, fecha: molde[h.tipo].fecha, fechado: molde[h.tipo].fechado };
+    });
+
+    abrirAba("horarios");
+    avisar("Copiado. Confira o sábado e o domingo antes de salvar.");
+}
+
+
+async function salvarHorarios() {
+    const novos = lerHorariosDaTela();
 
     const botao = document.querySelector('[data-salvar="horarios"]');
     botao.disabled = true;
@@ -435,26 +433,23 @@ async function salvarHorarios() {
 
     try {
         // Apagar tudo e gravar de novo, em vez de casar linha a linha.
-        // São três ou quatro faixas; a conta de descobrir o que mudou
-        // custaria mais código do que vale, e é onde nasceria o erro de
-        // uma faixa duplicada.
+        // São catorze linhas; a conta de descobrir o que mudou custaria
+        // mais código do que vale, e é onde nasceria o horário
+        // duplicado.
         const { error: erroApagar } = await banco.from("horarios").delete().eq("revenda_id", revenda.id);
         if (erroApagar) throw erroApagar;
 
-        if (novas.length) {
-            const { error } = await banco.from("horarios").insert(
-                novas.map((f, i) => ({ ...f, revenda_id: revenda.id, ordem: (i + 1) * 10 }))
-            );
-            if (error) throw error;
-        }
-
-        const { data, error } = await banco.from("horarios")
-            .select("id, rotulo, dias_semana, abre, fecha, ordem").order("ordem");
+        const { error } = await banco.from("horarios").insert(
+            novos.map((h) => ({ ...h, revenda_id: revenda.id }))
+        );
         if (error) throw error;
+
+        const { data, error: erroLer } = await banco.from("horarios")
+            .select("id, dia, tipo, abre, fecha, fechado").order("dia");
+        if (erroLer) throw erroLer;
 
         horarios = data;
         avisar("Horários salvos.");
-        desenharNoAr();
         abrirAba("horarios");
     } catch (erro) {
         console.error("Erro ao salvar horários:", erro);
@@ -704,30 +699,18 @@ document.addEventListener("click", (evento) => {
         return;
     }
 
-    if (evento.target.closest("[data-nova-faixa]")) {
-        horarios = lerHorariosDaTela().concat({
-            rotulo: "", dias_semana: [1, 2, 3, 4, 5], abre: "08:00", fecha: "18:00"
-        });
-        abrirAba("horarios");
-        return;
-    }
+    const copiar = evento.target.closest("[data-copiar]");
+    if (copiar) { copiarSegunda(copiar.dataset.copiar); return; }
 
-    const apagar = evento.target.closest("[data-apagar-faixa]");
-    if (apagar) {
-        const i = Number(apagar.dataset.apagarFaixa);
-        horarios = lerHorariosDaTela().filter((_, n) => n !== i);
-        abrirAba("horarios");
-        return;
-    }
-
-    if (evento.target.closest("#botao-publicar")) alternarPublicado();
     if (evento.target.closest("#botao-sair")) sair();
 });
 
 // O dia marcado muda de cor sem esperar o salvar.
 document.addEventListener("change", (evento) => {
-    const dia = evento.target.closest('[data-h="dia"]');
-    if (dia) dia.parentElement.classList.toggle("marcado", dia.checked);
+    // O bloco do dia apaga na hora que a pessoa marca "não atende",
+    // sem esperar o salvar.
+    const fechado = evento.target.closest('[data-campo="fechado"]');
+    if (fechado) fechado.closest("[data-h]").classList.toggle("fechado", fechado.checked);
 
     if (evento.target.id === "logo") {
         const arquivo = evento.target.files[0];
@@ -755,6 +738,6 @@ document.addEventListener("change", (evento) => {
         return;
     }
 
-    desenharNoAr();
+    desenharAssinatura();
     abrirAba("precos");
 })();

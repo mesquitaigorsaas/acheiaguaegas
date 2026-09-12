@@ -5,9 +5,8 @@
    e outro. Muitas vezes para mexer em uma coisa só: o preço do P13 que
    subiu hoje.
 
-   Então: campo grande, botão de salvar sempre à vista, e o selo de "no
-   ar" no topo, antes das abas — é a única coisa que responde à pergunta
-   que ele tem, que é se o anúncio está aparecendo.
+   Então: campo grande, botão de salvar sempre à vista, e o aviso da
+   assinatura no topo, antes das abas.
    ========================================== */
 
 body.tela-painel { background: var(--fundo); }
@@ -239,53 +238,100 @@ body.tela-painel { background: var(--fundo); }
 
 /* ==========================================
    HORÁRIOS
+
+   Um bloco por dia, e dentro dele duas linhas: entrega e balcão.
+   Catorze pares de hora numa tela só é muita coisa, então cada dia vira
+   um cartão com nome próprio — a pessoa acha o sábado sem contar
+   linhas.
 ========================================== */
 
-.faixa {
+.atalhos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.atalhos .botao-miudo { min-height: 44px; }
+
+.dia-bloco {
     border: 1px solid var(--linha);
     border-radius: var(--raio);
-    padding: 16px;
-    margin-bottom: 14px;
+    padding: 14px;
+    margin-bottom: 12px;
     background: var(--fundo);
 }
 
-.dias {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 14px;
+.dia-bloco h3 {
+    font-family: var(--titulo);
+    font-size: 15px;
+    color: var(--marinho);
+    margin-bottom: 10px;
 }
 
-.dia {
-    padding: 9px 13px;
+.tipo-horario {
+    display: grid;
+    grid-template-columns: 130px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 0;
+}
+
+.tipo-horario + .tipo-horario { border-top: 1px dashed var(--linha); }
+
+/* O dia sem atendimento apaga inteiro, e as horas continuam à vista.
+   Some, e o dono acha que perdeu o que tinha digitado. */
+.tipo-horario.fechado { opacity: .5; }
+
+.rotulo-tipo {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--tinta-fraca);
+}
+
+.horas {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.horas input {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 48px;
+    padding: 10px;
     background: var(--papel);
     border: 1.5px solid var(--linha);
-    border-radius: 999px;
+    border-radius: var(--raio);
+    outline: none;
+}
+
+.horas input:focus { border-color: var(--agua); }
+
+.ate { flex: none; font-size: 13.5px; color: var(--tinta-fraca); }
+
+.fecha-hoje {
+    display: flex;
+    align-items: center;
+    gap: 7px;
     font-size: 13.5px;
     font-weight: 600;
     color: var(--tinta-fraca);
     cursor: pointer;
-    user-select: none;
+    white-space: nowrap;
 }
 
-.dia input { display: none; }
+.fecha-hoje input { width: 20px; height: 20px; accent-color: var(--vermelho); }
 
-.dia.marcado {
-    background: var(--agua-clara);
-    border-color: var(--agua);
-    color: var(--marinho);
+@media (max-width: 620px) {
+    .tipo-horario {
+        grid-template-columns: 1fr auto;
+        row-gap: 8px;
+    }
+    .rotulo-tipo { grid-column: 1 / -1; }
+    .horas { grid-column: 1; }
 }
-
-.botao-perigo {
-    width: auto;
-    min-height: 42px;
-    padding: 8px 16px;
-    font-size: 14px;
-    color: var(--vermelho);
-    border-color: #f3cdc9;
-}
-
-.botao-perigo:hover { background: var(--vermelho-claro); border-color: var(--vermelho); color: var(--vermelho); }
 
 
 /* ==========================================
