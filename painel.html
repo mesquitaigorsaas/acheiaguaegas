@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Painel — Achei Água &amp; Gás</title>
+    <meta name="robots" content="noindex">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/busca.css">
+    <link rel="stylesheet" href="css/formulario.css">
+    <link rel="stylesheet" href="css/painel.css">
+</head>
+
+<body class="tela-painel">
+
+    <header class="topo">
+        <div class="limite">
+            <a class="marca" href="./" aria-label="Achei Água e Gás">
+                <img src="assets/marca/achei-agua-e-gas.png" alt="Achei Água &amp; Gás">
+            </a>
+            <button type="button" class="link-anunciar" id="botao-sair">Sair</button>
+        </div>
+        <p class="slogan" id="quem-sou">Carregando...</p>
+    </header>
+
+    <main class="limite">
+
+        <p id="recado" class="recado" role="alert" hidden></p>
+
+        <!-- O selo de no ar. É a primeira coisa que o dono olha, porque
+             é a única que responde "meu anúncio está aparecendo?" -->
+        <section class="cartao-no-ar" id="cartao-no-ar" hidden>
+            <div>
+                <strong id="titulo-no-ar"></strong>
+                <span id="explica-no-ar"></span>
+            </div>
+            <button type="button" class="botao" id="botao-publicar"></button>
+        </section>
+
+        <nav class="abas" id="abas" aria-label="Seções do painel"></nav>
+
+        <div id="area" class="carregando">Carregando o seu painel...</div>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/distancia.js"></script>
+    <script src="js/onde.js"></script>
+    <script src="js/banco.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/painel.js"></script>
+
+</body>
+</html>

@@ -103,3 +103,19 @@ function estaAberta(horarios, agora) {
             || (dias.includes(ontem) && minutoAgora < fecha);
     });
 }
+
+
+/**
+ * ["um preço", "o horário"] vira "um preço e o horário".
+ * Com três ou mais, vira "a, b e c".
+ *
+ * É a diferença entre um aviso que parece escrito por gente e um que
+ * parece log de sistema — e quem lê isto é o dono da revenda, não um
+ * programador.
+ */
+function emLista(itens) {
+    const lista = (itens || []).filter(Boolean);
+    if (!lista.length) return "";
+    if (lista.length === 1) return lista[0];
+    return lista.slice(0, -1).join(", ") + " e " + lista[lista.length - 1];
+}

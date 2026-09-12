@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Nova senha — Achei Água &amp; Gás</title>
+    <meta name="robots" content="noindex">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/busca.css">
+    <link rel="stylesheet" href="css/formulario.css">
+</head>
+
+<body>
+
+    <header class="topo">
+        <div class="limite">
+            <a class="marca" href="./" aria-label="Achei Água e Gás, página inicial">
+                <img src="assets/marca/achei-agua-e-gas.png" alt="Achei Água &amp; Gás">
+            </a>
+        </div>
+        <p class="slogan">Criar uma senha nova</p>
+    </header>
+
+    <main class="limite">
+
+        <p id="recado" class="recado" role="alert" hidden></p>
+
+        <section class="passo">
+            <p id="carregando" class="explica">Conferindo o seu link...</p>
+
+            <form id="form-nova-senha" novalidate hidden>
+                <h2>Nova senha</h2>
+
+                <div class="campo">
+                    <label for="senha">Nova senha</label>
+                    <div class="linha-senha">
+                        <input type="password" id="senha" autocomplete="new-password" required>
+                        <button type="button" class="botao-vazio botao-miudo" data-ver-senha="senha">Mostrar</button>
+                    </div>
+                    <p class="dica">Pelo menos 6 caracteres.</p>
+                </div>
+
+                <div class="campo">
+                    <label for="repetir-senha">Repita a nova senha</label>
+                    <div class="linha-senha">
+                        <input type="password" id="repetir-senha" autocomplete="new-password" required>
+                        <button type="button" class="botao-vazio botao-miudo" data-ver-senha="repetir-senha">Mostrar</button>
+                    </div>
+                    <p class="dica" id="aviso-senhas"></p>
+                </div>
+
+                <button type="submit" class="botao" id="botao-salvar">Salvar e entrar</button>
+            </form>
+
+            <p class="rodape-form">
+                <a href="entrar.html">Voltar para o login</a>
+            </p>
+        </section>
+
+    </main>
+
+    <footer class="rodape">
+        Achei Água &amp; Gás · Mesquita SAAS
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/banco.js"></script>
+    <script src="js/auth.js"></script>
+
+    <script>
+        /*
+           O link do e-mail traz um código na própria URL. A biblioteca
+           do Supabase o troca por uma sessão curta sozinha, assim que
+           carrega — e é essa sessão que autoriza a troca da senha.
+
+           Por isso a tela começa esperando: sem sessão, o formulário
+           salvaria a senha de ninguém.
+        */
+
+        const recado = document.getElementById("recado");
+        const form = document.getElementById("form-nova-senha");
+        const senha = document.getElementById("senha");
+        const repetir = document.getElementById("repetir-senha");
+
+        function avisar(texto, tipo) {
+            recado.textContent = texto || "";
+            recado.className = "recado" + (tipo === "erro" ? " erro" : "");
+            recado.hidden = !texto;
+        }
+
+        document.querySelectorAll("[data-ver-senha]").forEach((botao) => {
+            botao.addEventListener("click", () => {
+                const campo = document.getElementById(botao.dataset.verSenha);
+                const visivel = campo.type === "text";
+                campo.type = visivel ? "password" : "text";
+                botao.textContent = visivel ? "Mostrar" : "Ocultar";
+            });
+        });
+
+        function conferirSenhas() {
+            const aviso = document.getElementById("aviso-senhas");
+            if (!repetir.value) { aviso.textContent = ""; aviso.className = "dica"; return; }
+            const iguais = senha.value === repetir.value;
+            aviso.textContent = iguais ? "As senhas conferem." : "As duas senhas não são iguais.";
+            aviso.className = "dica " + (iguais ? "boa" : "ruim");
+        }
+
+        senha.addEventListener("input", conferirSenhas);
+        repetir.addEventListener("input", conferirSenhas);
+
+        (async () => {
+            const banco = conectar();
+            const carregando = document.getElementById("carregando");
+
+            if (!banco) {
+                carregando.hidden = true;
+                avisar("O sistema está sem conexão com o banco.", "erro");
+                return;
+            }
+
+            // A troca do código pela sessão acontece logo depois do
+            // carregamento, e não é instantânea. Esperar o evento evita
+            // concluir "link inválido" antes de a biblioteca terminar.
+            const { data } = await banco.auth.getSession();
+            let sessao = data.session;
+
+            if (!sessao) {
+                sessao = await new Promise((resolver) => {
+                    const parar = setTimeout(() => resolver(null), 3000);
+                    banco.auth.onAuthStateChange((_evento, s) => {
+                        if (s) { clearTimeout(parar); resolver(s); }
+                    });
+                });
+            }
+
+            carregando.hidden = true;
+
+            if (!sessao) {
+                avisar("Este link não vale mais. Peça outro na tela de entrar.", "erro");
+                return;
+            }
+
+            form.hidden = false;
+        })();
+
+        form.addEventListener("submit", async (evento) => {
+            evento.preventDefault();
+
+            if (senha.value.length < 6) {
+                avisar("A senha precisa ter pelo menos 6 caracteres.", "erro");
+                return;
+            }
+            if (senha.value !== repetir.value) {
+                avisar("As duas senhas não são iguais.", "erro");
+                return;
+            }
+
+            const botao = document.getElementById("botao-salvar");
+            botao.disabled = true;
+            botao.textContent = "Salvando...";
+            avisar("");
+
+            const banco = conectar();
+            const { error } = await banco.auth.updateUser({ password: senha.value });
+
+            if (error) {
+                avisar("Não consegui trocar a senha. Peça um link novo na tela de entrar.", "erro");
+                botao.disabled = false;
+                botao.textContent = "Salvar e entrar";
+                return;
+            }
+
+            // A senha trocou, mas entrar no painel ainda depende da
+            // assinatura estar em dia. Quem decide isso é o auth.js, e
+            // não esta tela.
+            const { data } = await banco.auth.getSession();
+            const situacao = await situacaoDaConta(data.session.user.id);
+
+            if (situacao.ok) {
+                location.href = ONDE_EDITAR;
+                return;
+            }
+
+            await banco.auth.signOut();
+            location.href = ONDE_ENTRAR + "?motivo=" + encodeURIComponent("Senha trocada. " + situacao.mensagem);
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,328 @@
+/* ==========================================
+   ACHEI ÁGUA & GÁS — O PAINEL DA REVENDA
+
+   Quem usa esta tela é o dono, no balcão, no celular, entre um cliente
+   e outro. Muitas vezes para mexer em uma coisa só: o preço do P13 que
+   subiu hoje.
+
+   Então: campo grande, botão de salvar sempre à vista, e o selo de "no
+   ar" no topo, antes das abas — é a única coisa que responde à pergunta
+   que ele tem, que é se o anúncio está aparecendo.
+   ========================================== */
+
+body.tela-painel { background: var(--fundo); }
+
+#botao-sair {
+    background: none;
+    cursor: pointer;
+}
+
+
+/* ==========================================
+   O SELO DE NO AR
+========================================== */
+
+.cartao-no-ar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    background: var(--papel);
+    border: 2px solid var(--linha);
+    border-radius: var(--raio-grande);
+    padding: 18px;
+    margin: 16px 0;
+    box-shadow: var(--sombra);
+}
+
+.cartao-no-ar.sim { border-color: #9fdcb8; background: var(--verde-claro); }
+.cartao-no-ar.nao { border-color: #f6c9c5; background: var(--vermelho-claro); }
+
+.cartao-no-ar > div { flex: 1 1 240px; min-width: 0; }
+
+.cartao-no-ar strong {
+    display: block;
+    font-family: var(--titulo);
+    font-size: 17px;
+}
+
+.cartao-no-ar.sim strong { color: var(--verde); }
+.cartao-no-ar.nao strong { color: var(--vermelho); }
+
+.cartao-no-ar span {
+    display: block;
+    margin-top: 2px;
+    font-size: 14px;
+    color: var(--tinta-fraca);
+}
+
+.cartao-no-ar .botao,
+.cartao-no-ar .botao-vazio {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 150px;
+}
+
+
+/* ==========================================
+   ABAS
+========================================== */
+
+.abas {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    margin-bottom: 14px;
+    /* No celular são quatro abas que não cabem lado a lado. Rolar na
+       horizontal é melhor que espremer o texto a ponto de não se ler. */
+    -webkit-overflow-scrolling: touch;
+}
+
+.abas button {
+    flex: none;
+    padding: 11px 18px;
+    background: var(--papel);
+    border: 1.5px solid var(--linha);
+    border-radius: 999px;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--tinta-fraca);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.abas button.ativa {
+    background: var(--marinho);
+    border-color: var(--marinho);
+    color: #fff;
+}
+
+.carregando {
+    padding: 40px 0;
+    text-align: center;
+    color: var(--tinta-fraca);
+}
+
+
+/* ==========================================
+   AS SEÇÕES
+========================================== */
+
+.secao {
+    background: var(--papel);
+    border: 1px solid var(--linha);
+    border-radius: var(--raio-grande);
+    padding: 20px 18px 18px;
+    box-shadow: var(--sombra);
+}
+
+.secao h2 {
+    font-family: var(--titulo);
+    font-size: 19px;
+    color: var(--marinho);
+    margin-bottom: 4px;
+}
+
+.secao .explica {
+    font-size: 14.5px;
+    color: var(--tinta-fraca);
+    margin-bottom: 14px;
+}
+
+.titulo-tipo {
+    font-family: var(--titulo);
+    font-size: 15px;
+    margin: 22px 0 10px;
+    padding-top: 14px;
+    border-top: 1px solid var(--linha);
+}
+
+.vazio-painel {
+    padding: 20px;
+    border: 1px dashed var(--linha);
+    border-radius: var(--raio);
+    text-align: center;
+    font-size: 14.5px;
+    color: var(--tinta-fraca);
+    margin-bottom: 14px;
+}
+
+
+/* A barra de salvar gruda no pé da tela. O dono mexe num preço e o
+   botão está ali, sem rolar até o fim de uma lista de dez itens. */
+.barra-salvar {
+    position: sticky;
+    bottom: 0;
+    margin: 20px -18px -18px;
+    padding: 14px 18px;
+    background: rgba(255, 255, 255, .96);
+    border-top: 1px solid var(--linha);
+    backdrop-filter: blur(6px);
+}
+
+
+/* ==========================================
+   PREÇOS
+========================================== */
+
+.linha-preco {
+    display: grid;
+    grid-template-columns: 1fr 132px auto;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--linha);
+}
+
+.linha-preco:last-of-type { border-bottom: none; }
+
+/* Esgotado fica apagado, e não some: o preço continua ali para o dia
+   em que voltar, e o dono vê que ele existe. */
+.linha-preco.esgotado { opacity: .55; }
+
+.nome-item { font-size: 15px; font-weight: 500; min-width: 0; }
+
+.nome-item small {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 400;
+    color: var(--tinta-fraca);
+}
+
+.campo-preco {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--papel);
+    border: 1.5px solid var(--linha);
+    border-radius: var(--raio);
+    padding: 0 12px;
+    min-height: 52px;
+}
+
+.campo-preco span { color: var(--tinta-fraca); font-size: 14px; }
+
+.campo-preco input {
+    width: 100%;
+    min-width: 0;
+    border: none;
+    outline: none;
+    padding: 12px 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.campo-preco:focus-within { border-color: var(--agua); }
+
+.tem-hoje {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--tinta-fraca);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.tem-hoje input { width: 20px; height: 20px; accent-color: var(--verde); }
+
+@media (max-width: 560px) {
+    .linha-preco {
+        grid-template-columns: 1fr auto;
+        row-gap: 8px;
+    }
+    .nome-item { grid-column: 1 / -1; }
+}
+
+
+/* ==========================================
+   HORÁRIOS
+========================================== */
+
+.faixa {
+    border: 1px solid var(--linha);
+    border-radius: var(--raio);
+    padding: 16px;
+    margin-bottom: 14px;
+    background: var(--fundo);
+}
+
+.dias {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.dia {
+    padding: 9px 13px;
+    background: var(--papel);
+    border: 1.5px solid var(--linha);
+    border-radius: 999px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--tinta-fraca);
+    cursor: pointer;
+    user-select: none;
+}
+
+.dia input { display: none; }
+
+.dia.marcado {
+    background: var(--agua-clara);
+    border-color: var(--agua);
+    color: var(--marinho);
+}
+
+.botao-perigo {
+    width: auto;
+    min-height: 42px;
+    padding: 8px 16px;
+    font-size: 14px;
+    color: var(--vermelho);
+    border-color: #f3cdc9;
+}
+
+.botao-perigo:hover { background: var(--vermelho-claro); border-color: var(--vermelho); color: var(--vermelho); }
+
+
+/* ==========================================
+   ENTREGA
+========================================== */
+
+.marcar {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    background: var(--fundo);
+    border: 1.5px solid var(--linha);
+    border-radius: var(--raio);
+    cursor: pointer;
+}
+
+.marcar input {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    margin-top: 2px;
+    accent-color: var(--agua-escura);
+}
+
+.marcar strong { display: block; font-size: 15px; }
+
+.marcar span span,
+.marcar span { font-size: 14px; color: var(--tinta-fraca); }
+
+.aviso-endereco {
+    padding: 14px;
+    background: var(--gas-clara);
+    border: 1px solid #f6dcba;
+    border-radius: var(--raio);
+    color: #7a4408;
+}
+
+.aviso-endereco strong { display: block; }

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Entrar — Achei Água &amp; Gás</title>
+
+    <!-- Esta tela é do dono da revenda, não de quem procura gás. Não
+         deve aparecer em busca nenhuma. -->
+    <meta name="robots" content="noindex">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/busca.css">
+    <link rel="stylesheet" href="css/formulario.css">
+</head>
+
+<body>
+
+    <header class="topo">
+        <div class="limite">
+            <a class="marca" href="./" aria-label="Achei Água e Gás, página inicial">
+                <img src="assets/marca/achei-agua-e-gas.png" alt="Achei Água &amp; Gás">
+            </a>
+            <a class="link-anunciar" href="./">Voltar para a busca</a>
+        </div>
+        <p class="slogan">Painel da revenda</p>
+    </header>
+
+    <main class="limite">
+
+        <p id="recado" class="recado" role="alert" hidden></p>
+
+        <section class="passo">
+            <h2>Entrar</h2>
+
+            <form id="form-entrar" novalidate>
+                <div class="campo">
+                    <label for="email">E-mail</label>
+                    <input type="email" id="email" autocomplete="username" required>
+                </div>
+
+                <div class="campo">
+                    <label for="senha">Senha</label>
+                    <div class="linha-senha">
+                        <input type="password" id="senha" autocomplete="current-password" required>
+                        <button type="button" class="botao-vazio botao-miudo" data-ver-senha="senha">Mostrar</button>
+                    </div>
+                </div>
+
+                <button type="submit" class="botao" id="botao-entrar">Entrar</button>
+            </form>
+
+            <!-- Quem se cadastrou e ainda não pagou bate aqui todo dia
+                 para ver se abriu. Sem este bloco ele lê "falta o
+                 pagamento" e não tem por onde pagar. -->
+            <p id="bloco-pagar" hidden>
+                <a id="link-pagamento" class="botao" href="#" target="_blank" rel="noopener">
+                    Pagar a assinatura
+                </a>
+            </p>
+
+            <p class="rodape-form">
+                <a href="#" id="link-esqueci">Esqueci a senha</a>
+            </p>
+
+            <form id="form-esqueci" hidden>
+                <div class="campo">
+                    <label for="email-recuperar">Seu e-mail de acesso</label>
+                    <input type="email" id="email-recuperar" autocomplete="username">
+                    <p class="dica">Mandamos um link para você criar uma senha nova.</p>
+                </div>
+                <button type="submit" class="botao-vazio" id="botao-recuperar">Enviar o link</button>
+            </form>
+
+            <p class="rodape-form">
+                Ainda não anuncia? <a href="anunciar.html">Cadastrar minha revenda</a>
+            </p>
+        </section>
+
+    </main>
+
+    <footer class="rodape">
+        Achei Água &amp; Gás · Mesquita SAAS
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/banco.js"></script>
+    <script src="js/auth.js"></script>
+
+    <script>
+        const recado = document.getElementById("recado");
+
+        function avisar(texto, tipo) {
+            recado.textContent = texto || "";
+            recado.className = "recado" + (tipo === "erro" ? " erro" : "");
+            recado.hidden = !texto;
+        }
+
+        // Quem foi expulso de uma página do painel chega aqui com o
+        // motivo na URL. Sem isso a pessoa volta ao login sem saber por
+        // que caiu.
+        const motivo = new URLSearchParams(location.search).get("motivo");
+        if (motivo) avisar(motivo, "erro");
+
+        document.querySelectorAll("[data-ver-senha]").forEach((botao) => {
+            botao.addEventListener("click", () => {
+                const campo = document.getElementById(botao.dataset.verSenha);
+                const visivel = campo.type === "text";
+                campo.type = visivel ? "password" : "text";
+                botao.textContent = visivel ? "Mostrar" : "Ocultar";
+            });
+        });
+
+        // Quem já está logado não precisa ver esta tela de novo.
+        (async () => {
+            const banco = conectar();
+            if (!banco) return;
+            const { data } = await banco.auth.getSession();
+            if (data.session && !motivo) location.href = ONDE_EDITAR;
+        })();
+
+        document.getElementById("form-entrar").addEventListener("submit", async (evento) => {
+            evento.preventDefault();
+
+            const botao = document.getElementById("botao-entrar");
+            botao.disabled = true;
+            botao.textContent = "Entrando...";
+            avisar("");
+
+            const r = await entrar(
+                document.getElementById("email").value,
+                document.getElementById("senha").value
+            );
+
+            if (r.ok) {
+                location.href = ONDE_EDITAR;
+                return;
+            }
+
+            avisar(r.mensagem, "erro");
+
+            if (r.linkDePagamento) {
+                document.getElementById("link-pagamento").href = r.linkDePagamento;
+                document.getElementById("bloco-pagar").hidden = false;
+            }
+
+            botao.disabled = false;
+            botao.textContent = "Entrar";
+        });
+
+        // Esqueci a senha: o formulário só aparece quando pedido, para a
+        // tela de entrar continuar sendo dois campos e um botão.
+        const formEsqueci = document.getElementById("form-esqueci");
+        const linkEsqueci = document.getElementById("link-esqueci");
+
+        linkEsqueci.addEventListener("click", (evento) => {
+            evento.preventDefault();
+            formEsqueci.hidden = false;
+            linkEsqueci.parentElement.hidden = true;
+            document.getElementById("email-recuperar").value = document.getElementById("email").value;
+            document.getElementById("email-recuperar").focus();
+        });
+
+        formEsqueci.addEventListener("submit", async (evento) => {
+            evento.preventDefault();
+
+            const botao = document.getElementById("botao-recuperar");
+            botao.disabled = true;
+            botao.textContent = "Enviando...";
+            avisar("");
+
+            const r = await pedirNovaSenha(document.getElementById("email-recuperar").value);
+
+            avisar(r.mensagem, r.ok ? "" : "erro");
+            botao.disabled = false;
+            botao.textContent = "Enviar o link";
+
+            if (r.ok) formEsqueci.hidden = true;
+        });
+    </script>
+
+</body>
+</html>
