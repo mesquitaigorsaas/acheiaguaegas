@@ -138,10 +138,35 @@ function definirOnde(onde) {
     document.getElementById("resumo-onde").innerHTML =
         "Buscando perto de<small>" + esc(onde.escrito) + "</small>";
 
+    desenharMapa(onde);
     fecharPasso("passo-onde");
     document.getElementById("passo-oque").hidden = false;
 
     if (estado.pedido.length) procurarLogo();
+}
+
+
+/**
+ * O ponto da busca no Google Maps.
+ *
+ * Pelo endereço de incorporar, e não pela API: esse não pede chave, e
+ * o site é estático — chave nenhuma ficaria escondida aqui dentro.
+ */
+function desenharMapa(onde) {
+    const mapa = document.getElementById("mapa-onde");
+    const ponto = Number(onde.lat).toFixed(6) + "," + Number(onde.lng).toFixed(6);
+
+    // Trocar o item do pedido não mexe no lugar; recarregar o mapa
+    // à toa só piscaria a tela.
+    if (mapa.dataset.ponto === ponto) return;
+    mapa.dataset.ponto = ponto;
+
+    mapa.innerHTML =
+        `<iframe src="https://maps.google.com/maps?q=${ponto}&z=16&output=embed"
+                 title="Onde você está, no mapa" loading="lazy"></iframe>
+         <a href="https://www.google.com/maps/search/?api=1&query=${ponto}"
+            target="_blank" rel="noopener">Abrir no Google Maps</a>`;
+    mapa.hidden = false;
 }
 
 

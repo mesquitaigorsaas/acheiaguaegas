@@ -149,7 +149,10 @@ async function coordenadaDoEndereco(rua, cidade, uf) {
         const u = "https://nominatim.openstreetmap.org/search?format=json&limit=1"
                 + "&countrycodes=br&q=" + encodeURIComponent(busca);
 
-        const r = await fetch(u, { headers: { Accept: "application/json" }, signal: prazoCurto() });
+        // Mais folga que o CEP: o Nominatim é gratuito e compartilhado, e
+        // passar de 4 segundos é comum. Com o prazo curto, endereço certo
+        // voltava como "não achei".
+        const r = await fetch(u, { headers: { Accept: "application/json" }, signal: prazoCurto(10000) });
         if (!r.ok) return null;
 
         const j = await r.json();

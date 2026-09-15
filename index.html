@@ -70,6 +70,13 @@
 
             <div class="resumo-passo" id="resumo-onde"></div>
             <button type="button" class="botao-vazio botao-trocar" data-voltar="onde">Trocar</button>
+
+            <!-- O ponto que a busca vai usar, no mapa. GPS de celular
+                 dentro de casa erra de quarteirão, e o endereço escrito
+                 pode cair na rua de mesmo nome do outro lado da cidade:
+                 ver o pino é o jeito de a pessoa perceber antes de
+                 comparar distâncias medidas do lugar errado. -->
+            <div class="mapa-onde" id="mapa-onde" hidden></div>
         </section>
 
         <!-- PASSO 2 -->

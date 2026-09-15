@@ -160,7 +160,32 @@
 }
 
 .passo:not(.pronto) .resumo-passo,
-.passo:not(.pronto) .botao-trocar { display: none; }
+.passo:not(.pronto) .botao-trocar,
+.passo:not(.pronto) .mapa-onde { display: none; }
+
+/* O resumo e o botão ficam na mesma linha; o mapa desce para a de baixo. */
+.passo.pronto { flex-wrap: wrap; }
+
+.mapa-onde {
+    flex-basis: 100%;
+}
+
+.mapa-onde iframe {
+    display: block;
+    width: 100%;
+    height: 220px;
+    border: 1px solid #bfdffd;
+    border-radius: var(--raio);
+    background: var(--papel);
+}
+
+.mapa-onde a {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--agua-escura);
+}
 
 
 /* ==========================================
