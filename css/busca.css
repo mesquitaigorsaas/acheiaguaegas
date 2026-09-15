@@ -656,13 +656,12 @@
 
 .detalhe-itens li span { font-weight: 600; color: var(--tinta); }
 
-/* O que ela não vende fica riscado, e não escondido: é essa a
+/* O que está em falta fica riscado, e não escondido: é essa a
    informação que faz a pessoa decidir entre pedir tudo aqui ou
-   dividir em dois lugares. */
-.detalhe-itens li.falta { text-decoration: line-through; opacity: .65; }
-.detalhe-itens li.falta span { text-decoration: none; font-weight: 400; }
-
-.selo.incompleta { background: var(--gas-clara); color: #a8560a; }
+   dividir em dois lugares. O risco fica só no nome, dentro do <s>:
+   no <li> inteiro ele passaria também por cima do "Em falta". */
+.detalhe-itens li.falta s { opacity: .65; }
+.detalhe-itens li.falta span { font-weight: 700; color: var(--vermelho); }
 .selo.nao-aceita { background: var(--vermelho-claro); color: var(--vermelho); }
 .selo.entrega-gratis { background: var(--verde-claro); color: var(--verde); }
 .selo.taxa { background: var(--fundo); color: var(--tinta); }

@@ -643,7 +643,10 @@ function cartao(r, pedidos, menorTotal) {
             const p = r.precos ? r.precos[i.id] : undefined;
             const nome = (qtdDe(i) > 1 ? qtdDe(i) + "× " : "") + (i.apelido || i.nome);
             return p === undefined
-                ? `<li class="falta">${esc(nome)}<span>não vende</span></li>`
+                // "Em falta", e não "não vende": a revenda pode só estar
+                // sem estoque hoje. O detalhamento já diz o que falta, e
+                // por isso o cartão não precisa de selo contando itens.
+                ? `<li class="falta"><s>${esc(nome)}</s><span>Em falta</span></li>`
                 : `<li>${esc(nome)}<span>${esc(dinheiro(Number(p) * qtdDe(i)))}</span></li>`;
           }).join("")
           + (taxa > 0 ? `<li>Taxa de entrega<span>${esc(dinheiro(taxa))}</span></li>` : "")
@@ -663,7 +666,6 @@ function cartao(r, pedidos, menorTotal) {
                 <div class="linha-selos">
                     <span class="selo ${r.aberta ? "aberta" : "fechada"}">${r.aberta ? "Aberta agora" : "Fechada"}</span>
                     ${maisBarata ? '<span class="selo mais-barata">Mais barata</span>' : ""}
-                    ${completa ? "" : `<span class="selo incompleta">Tem ${r.itens_encontrados} de ${pedidos}</span>`}
                     ${r.faz_entrega === false ? '<span class="selo so-balcao">Só no balcão</span>' : ""}
                     ${r.faz_retirada === false ? '<span class="selo so-entrega">Só entrega</span>' : ""}
                     ${estado.modo === "entrega"
