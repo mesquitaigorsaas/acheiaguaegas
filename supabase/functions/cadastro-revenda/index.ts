@@ -12,11 +12,11 @@
 // policies.sql, de propósito, não deixam ninguém criar revenda.
 //
 // Cria, nesta ordem:
-//   1. a revenda, despublicada e aguardando pagamento
+//   1. a revenda, aguardando pagamento — e por isso fora da busca
 //   2. o acesso (e-mail + senha) no Supabase Auth
 //   3. o usuário dono, ligando os dois
-//   4. o mínimo para o painel não abrir vazio: uma faixa de
-//      horário para o dono corrigir
+//   4. o mínimo para o painel não abrir vazio: um horário de
+//      partida, por dia e por tipo, para o dono corrigir
 //
 // Se qualquer passo falhar, desfaz os anteriores. Melhor não
 // existir do que existir pela metade — revenda sem dono não tem
@@ -62,11 +62,9 @@ Deno.serve(async (req) => {
                 endereco_texto: String(body.endereco_texto ?? "").trim() || String(body.rua).trim(),
                 latitude: Number(body.latitude),
                 longitude: Number(body.longitude),
-                // Despublicada: ela ainda não tem preço nenhum
-                // cadastrado, e uma revenda sem preço na busca é pior
-                // que revenda nenhuma — o cliente clica e não acha o
-                // que veio procurar.
-                publicado: false,
+                // Não existe mais "publicado": o 003-horarios-por-dia.sql
+                // tirou a coluna, e quem pagou está no ar. Enquanto o
+                // pagamento não cai, a busca simplesmente não a traz.
                 assinatura_status: "aguardando_pagamento"
             })
             .select("id")
@@ -113,18 +111,29 @@ Deno.serve(async (req) => {
         }
 
         // --- 4. o mínimo para o painel não abrir vazio -------------
-        // Uma faixa de horário para o dono corrigir. Sem nenhuma, a
-        // revenda fica "fechada" para sempre e ele não vê por quê.
-        // Falha aqui não desfaz nada: o cadastro está de pé e ele cria
-        // a faixa à mão em dois cliques.
-        await supabase.from("horarios").insert({
-            revenda_id: revenda.id,
-            rotulo: "Segunda a sábado",
-            dias_semana: [1, 2, 3, 4, 5, 6],
-            abre: "08:00",
-            fecha: "18:00",
-            ordem: 1
-        });
+        // Uma linha por dia e por tipo, no formato do
+        // 003-horarios-por-dia.sql: segunda a sábado das 8 às 18,
+        // domingo fechado, igual ao que a migração deu a quem já
+        // estava cadastrado. Sem nenhuma linha, a revenda fica
+        // "fechada" para sempre e o dono não vê por quê.
+        // Falha aqui não desfaz nada: o cadastro está de pé e ele
+        // acerta os horários no painel.
+        const horarios = [];
+        for (let dia = 0; dia <= 6; dia++) {
+            for (const tipo of ["entrega", "retirada"]) {
+                horarios.push({
+                    revenda_id: revenda.id,
+                    dia,
+                    tipo,
+                    abre: "08:00",
+                    fecha: "18:00",
+                    fechado: dia === 0
+                });
+            }
+        }
+
+        const { error: erroHorarios } = await supabase.from("horarios").insert(horarios);
+        if (erroHorarios) console.error("Erro ao criar horários de partida:", erroHorarios);
 
         return resposta({ ok: true, revenda_id: revenda.id }, 200);
     } catch (erro) {
