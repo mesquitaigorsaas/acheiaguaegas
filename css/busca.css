@@ -40,13 +40,16 @@
 }
 
 .marca img {
-    height: 40px;
+    height: 52px;
     width: auto;
 }
 
 @media (max-width: 420px) {
-    /* No celular estreito o link de anunciar disputa espaço com ela. */
-    .marca img { height: 32px; }
+    /* No celular estreito a logo disputa espaço com os dois links. Ela
+       fica maior que antes, e quem cede é o texto do botão, que vira
+       só "Anunciar". */
+    .marca img { height: 40px; }
+    .so-largo { display: none; }
 }
 
 /* Sobre o marinho, o link vira contorno claro. Texto azul no azul
@@ -688,7 +691,19 @@
 
 .campo-troco { margin: 12px 0 0; }
 
-.aviso-pagamento {
+/* O campo que falta preencher, apontado no clique do WhatsApp. */
+.campo .faltando { border-color: var(--vermelho) !important; }
+
+/* O título que separa quem não tem o pedido inteiro. */
+.grupo-parcial {
+    margin-top: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--tinta-fraca);
+}
+
+.aviso-pagamento,
+.aviso-campo {
     margin-top: 10px;
     padding: 10px 12px;
     border-radius: var(--raio);

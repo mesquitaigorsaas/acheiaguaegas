@@ -573,9 +573,19 @@ function desenharLista() {
         ? Math.min(...completasAbertas.map(totalDe))
         : null;
 
-    lista.innerHTML = ordenar(achados, pedidos)
-        .map((r) => cartao(r, pedidos, menorTotal))
-        .join("");
+    const emOrdem = ordenar(achados, pedidos);
+    const completas = emOrdem.filter((r) => r.itens_encontrados === pedidos);
+    const parciais = emOrdem.filter((r) => r.itens_encontrados !== pedidos);
+
+    // Quem não tem o pedido inteiro vem depois, sob um título. Sem ele,
+    // uma revenda de total menor aparecia abaixo de uma mais cara, e a
+    // ordem por preço parecia quebrada — quando o total só era menor
+    // porque faltava item.
+    lista.innerHTML = completas.map((r) => cartao(r, pedidos, menorTotal)).join("")
+        + (parciais.length
+            ? `<p class="grupo-parcial">${completas.length ? "Não têm tudo o que você pediu" : "Ninguém tem tudo o que você pediu"}</p>`
+              + parciais.map((r) => cartao(r, pedidos, menorTotal)).join("")
+            : "");
 }
 
 
@@ -599,7 +609,11 @@ function ordenar(achados, pedidos) {
         const bCompleta = b.itens_encontrados === pedidos;
 
         if (aCompleta !== bCompleta) return aCompleta ? -1 : 1;
-        if (!aCompleta) return 0;
+
+        // Entre as que têm só parte, primeiro a que tem mais do pedido.
+        if (!aCompleta && a.itens_encontrados !== b.itens_encontrados) {
+            return b.itens_encontrados - a.itens_encontrados;
+        }
 
         return totalDe(a) - totalDe(b);
     });
@@ -711,35 +725,76 @@ function cartao(r, pedidos, menorTotal) {
  * Sem forma de pagamento, o clique não sai. Responder uma pergunta
  * antes é melhor do que descobrir na porta que a revenda não aceita.
  */
+// O que a entrega não dispensa. O complemento fica de fora: casa não tem.
+const OBRIGATORIOS_DA_ENTREGA = [
+    { id: "rua",    nome: "a rua" },
+    { id: "numero", nome: "o número" },
+    { id: "bairro", nome: "o bairro" },
+    { id: "cidade", nome: "a cidade" },
+    { id: "uf",     nome: "o estado" }
+];
+
 function completarZap(evento, link) {
     const r = achadosDaVez.find((x) => x.revenda_id === link.dataset.revenda);
+    const problemas = [];
 
     if (!estado.pagamento) {
-        segurarNoPagamento(evento, "Escolha como vai pagar. A revenda precisa saber antes de sair com o pedido.");
-        return;
+        problemas.push({
+            aviso: "aviso-pagamento",
+            alvo: "pagamentos",
+            texto: "Escolha como vai pagar. A revenda precisa saber antes de sair com o pedido."
+        });
+    } else {
+        // Troco para menos que o total é número trocado, e o entregador
+        // só descobre na porta, sem dinheiro para voltar.
+        const troco = lerTroco();
+        if (r && estado.pagamento === "dinheiro" && troco && troco < totalDe(r)) {
+            problemas.push({
+                aviso: "aviso-pagamento",
+                alvo: "troco",
+                texto: "O troco precisa ser para mais que o total desta revenda, "
+                    + dinheiro(totalDe(r)) + ". Confira o valor ou deixe em branco."
+            });
+        }
     }
 
-    // Troco para menos que o total é número trocado, e o entregador só
-    // descobre na porta, sem dinheiro para voltar.
-    const troco = lerTroco();
-    if (r && estado.pagamento === "dinheiro" && troco && troco < totalDe(r)) {
-        segurarNoPagamento(evento, "O troco precisa ser para mais que o total desta revenda, "
-            + dinheiro(totalDe(r)) + ". Confira o valor ou deixe em branco.");
+    // O endereço só é exigido na entrega. Quem vai buscar não precisa
+    // dizer onde mora para o balcão.
+    if (estado.modo === "entrega") {
+        const faltam = OBRIGATORIOS_DA_ENTREGA.filter((c) => !document.getElementById(c.id).value.trim());
+        faltam.forEach((c) => document.getElementById(c.id).classList.add("faltando"));
+
+        if (faltam.length) {
+            problemas.push({
+                aviso: "aviso-endereco",
+                alvo: faltam[0].id,
+                texto: "Para a entrega, falta preencher " + emLista(faltam.map((c) => c.nome)) + "."
+            });
+        }
+    }
+
+    document.getElementById("aviso-pagamento").hidden = true;
+    document.getElementById("aviso-endereco").hidden = true;
+
+    if (problemas.length) {
+        // Não abre o WhatsApp. Mostra tudo o que falta de uma vez — um
+        // aviso por clique faria a pessoa voltar três vezes — e leva até
+        // o primeiro.
+        evento.preventDefault();
+
+        problemas.forEach((p) => {
+            const aviso = document.getElementById(p.aviso);
+            aviso.textContent = p.texto;
+            aviso.hidden = false;
+        });
+
+        const alvo = document.getElementById(problemas[0].alvo);
+        alvo.scrollIntoView({ behavior: "smooth", block: "center" });
+        if (alvo.matches("input, select")) alvo.focus({ preventScroll: true });
         return;
     }
 
     if (r) link.href = "https://wa.me/" + link.dataset.zap + "?text=" + encodeURIComponent(mensagemDoPedido(r));
-}
-
-/** Não abre o WhatsApp, e leva a pessoa até o que falta responder. */
-function segurarNoPagamento(evento, texto) {
-    evento.preventDefault();
-
-    const aviso = document.getElementById("aviso-pagamento");
-    aviso.textContent = texto;
-    aviso.hidden = false;
-
-    document.getElementById("pagamentos").scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
 
@@ -803,6 +858,14 @@ function lerTroco() {
 (async function iniciar() {
     document.getElementById("form-endereco").addEventListener("submit", usarEndereco);
     document.getElementById("rua").addEventListener("input", aoDigitarRua);
+
+    // Preencheu o campo apontado, o vermelho sai; preencheu todos, o aviso sai.
+    document.getElementById("form-endereco").addEventListener("input", (evento) => {
+        evento.target.classList.remove("faltando");
+        if (!document.querySelector("#form-endereco .faltando")) {
+            document.getElementById("aviso-endereco").hidden = true;
+        }
+    });
 
     // O bairro é o que escolhe o trecho certo de uma avenida comprida.
     // Corrigido à mão depois de o mapa aparecer, o pino se ajusta
