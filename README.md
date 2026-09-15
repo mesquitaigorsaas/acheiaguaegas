@@ -109,9 +109,10 @@ A coordenada sai do GPS do aparelho, ou do endereço escrito, via CEP na
 BrasilAPI e nome da rua no Nominatim. Nenhum dos dois pede chave, e isso não é
 economia: o site é estático, e qualquer chave dentro dele estaria à vista.
 
-**A ordem da lista é: tem tudo, depois aberta, depois a mais perto.** O preço
-aparece e a mais barata ganha selo, mas ele não ordena: quem escolhe entre
-economizar cinco reais e esperar menos é o cliente.
+**A lista começa por quem tem o pedido inteiro, e dentro disso a mais perto.**
+O cliente pode trocar para **menor preço** no topo da lista: quem escolhe entre
+economizar cinco reais e esperar menos é ele. Mesmo por preço, quem tem só
+parte do pedido fica atrás — o total dela é menor porque falta coisa.
 
 ---
 

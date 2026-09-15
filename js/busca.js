@@ -40,6 +40,7 @@ const estado = {
     tipo: "gas",      // a aba aberta: "gas" ou "agua"
     pedido: [],       // os itens marcados, na ordem em que foram marcados
     modo: "entrega",  // "entrega" ou "retirada"
+    ordem: "distancia", // "distancia" ou "preco"
     // Vem DESMARCADO: a lista mostra todo mundo, e o horário é
     // informação, não corte. Quem quiser ver só quem atende agora
     // marca a caixa.
@@ -271,7 +272,7 @@ function desenharPedido() {
 function escolherModo(modo) {
     estado.modo = modo;
 
-    document.querySelectorAll(".modo").forEach((b) => {
+    document.querySelectorAll(".modo[data-modo]").forEach((b) => {
         b.classList.toggle("escolhido", b.dataset.modo === modo);
     });
 
@@ -393,9 +394,47 @@ function desenharLista() {
         ? Math.min(...completasAbertas.map((r) => Number(r.total)))
         : null;
 
-    lista.innerHTML = achados
+    lista.innerHTML = ordenar(achados, pedidos)
         .map((r) => cartao(r, pedidos, menorTotal))
         .join("");
+}
+
+
+/**
+ * A lista na ordem que a pessoa escolheu.
+ *
+ * O banco já devolve na ordem da distância: quem tem o pedido inteiro
+ * primeiro, e dentro disso a mais perto. Por preço, quem tem o pedido
+ * inteiro continua na frente — o total de quem só tem metade é barato
+ * justamente porque falta coisa, e subir com ela seria comparar pedidos
+ * diferentes. Essas ficam atrás, na ordem da distância.
+ *
+ * O sort do JavaScript é estável: preço empatado mantém a mais perto
+ * na frente, sem precisar dizer.
+ */
+function ordenar(achados, pedidos) {
+    if (estado.ordem !== "preco") return achados;
+
+    return [...achados].sort((a, b) => {
+        const aCompleta = a.itens_encontrados === pedidos;
+        const bCompleta = b.itens_encontrados === pedidos;
+
+        if (aCompleta !== bCompleta) return aCompleta ? -1 : 1;
+        if (!aCompleta) return 0;
+
+        return Number(a.total) - Number(b.total);
+    });
+}
+
+
+function escolherOrdem(ordem) {
+    estado.ordem = ordem;
+
+    document.querySelectorAll("[data-ordem]").forEach((b) => {
+        b.classList.toggle("escolhido", b.dataset.ordem === ordem);
+    });
+
+    desenharLista();
 }
 
 
@@ -478,6 +517,9 @@ function cartao(r, pedidos, menorTotal) {
 
         const modo = evento.target.closest("[data-modo]");
         if (modo) { escolherModo(modo.dataset.modo); return; }
+
+        const ordem = evento.target.closest("[data-ordem]");
+        if (ordem) { escolherOrdem(ordem.dataset.ordem); return; }
 
         const item = evento.target.closest("[data-item]");
         if (item) { alternarItem(item.dataset.item); return; }

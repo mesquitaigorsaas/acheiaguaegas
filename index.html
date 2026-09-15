@@ -126,6 +126,18 @@
                 <span id="contagem"></span>
             </div>
 
+            <!-- Quem decide entre economizar e esperar menos é o cliente,
+                 então a ordem é dele. Começa pela distância: água e gás
+                 é necessidade, e quem procura quer para agora. -->
+            <div class="ordens" role="group" aria-label="Ordem da lista">
+                <button type="button" class="modo escolhido" data-ordem="distancia">
+                    Mais perto
+                </button>
+                <button type="button" class="modo" data-ordem="preco">
+                    Menor preço
+                </button>
+            </div>
+
             <!-- Desligado por padrão: a lista mostra todo mundo, e o
                  selo de cada cartão diz quem está aberto. Cortar por
                  horário esconderia a revenda mais perto por causa de um
