@@ -355,6 +355,51 @@ function mostrarPronto(dados) {
 
 
 /* ==========================================
+   O CEP PREENCHE O ENDEREÇO
+========================================== */
+
+/*
+   Oito números no CEP e a rua, o bairro, a cidade e o estado se
+   preenchem sozinhos, e o mapa já confere. Sobra para o dono só o
+   número, que é o que ele sabe de cabeça.
+*/
+let cepProcurado = null;
+
+async function aoDigitarCep() {
+    const cep = somenteDigitos(valor("cep"));
+    if (cep.length !== 8) { cepProcurado = null; return; }
+    if (cep === cepProcurado) return;
+    cepProcurado = cep;
+
+    const achado = await enderecoDoCep(cep);
+
+    // Continuou digitando enquanto o CEP ia e voltava.
+    if (somenteDigitos(valor("cep")) !== cep) return;
+
+    if (!achado) {
+        cepProcurado = null;
+        avisar("Não achei esse CEP. Confira os números, ou preencha o endereço à mão.", "erro");
+        return;
+    }
+
+    avisar("");
+    document.getElementById("rua").value = achado.rua;
+    document.getElementById("bairro").value = achado.bairro;
+    document.getElementById("cidade").value = achado.cidade;
+    document.getElementById("uf").value = achado.uf.toUpperCase();
+
+    if (!achado.rua) {
+        avisar("Esse CEP é da cidade inteira. Escreva o nome da rua e confira no mapa.");
+        document.getElementById("rua").focus();
+        return;
+    }
+
+    document.getElementById("numero").focus();
+    acharEndereco();
+}
+
+
+/* ==========================================
    LIGAR A TELA
 ========================================== */
 
@@ -363,6 +408,7 @@ function mostrarPronto(dados) {
     document.getElementById("cnpj").addEventListener("input", conferirCnpj);
     document.getElementById("logo").addEventListener("change", escolherLogo);
     document.getElementById("botao-achar-endereco").addEventListener("click", acharEndereco);
+    document.getElementById("cep").addEventListener("input", aoDigitarCep);
     document.getElementById("form-cadastro").addEventListener("submit", aoCadastrar);
 
     document.getElementById("senha").addEventListener("input", conferirSenhas);
@@ -371,7 +417,9 @@ function mostrarPronto(dados) {
     // Mexeu no endereço, a coordenada conferida não vale mais. Sem isto
     // a pessoa confere um endereço, troca a rua, e salva com o ponto
     // antigo — o pior dos erros, porque ninguém percebe.
-    ["cep", "rua", "numero", "bairro", "cidade", "uf"].forEach((id) => {
+    // O número fica de fora: o mapa não conhece numeração, então ele não
+    // muda o ponto — e o CEP já conferiu antes de o dono digitá-lo.
+    ["cep", "rua", "bairro", "cidade", "uf"].forEach((id) => {
         document.getElementById(id).addEventListener("input", () => {
             estado.onde = null;
             document.getElementById("achado").hidden = true;
