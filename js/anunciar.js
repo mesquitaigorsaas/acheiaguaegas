@@ -109,6 +109,7 @@ async function acharEndereco() {
     const ponto = await ondeFica({
         cep: somenteDigitos(valor("cep")),
         rua,
+        numero: valor("numero"),
         cidade,
         uf: valor("uf")
     });

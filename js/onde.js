@@ -171,20 +171,33 @@ async function enderecoDoCep(cep) {
 /**
  * A coordenada de um endereço escrito.
  *
- * A busca vai SEM o número e SEM o bairro, de propósito. Com número,
- * quase nada é encontrado. Com bairro, ela falha quando o mapa discorda
- * do bairro que a pessoa escreveu — "Rua Geraldo Freitas da Costa, Vila
- * Teixeira, Alfenas" não acha nada, e sem o bairro acha.
+ * Primeiro COM o número, que em cidade grande separa um trecho do outro:
+ * a Raja Gabaglia atravessa vários bairros de BH, e sem o número o pino
+ * pode cair no bairro errado. Sem resultado, tenta de novo SEM o número,
+ * que é o que resolve em cidade pequena, onde o mapa quase não tem
+ * numeração.
+ *
+ * Bairro nunca vai: a busca falha quando o mapa discorda do bairro que a
+ * pessoa escreveu — "Rua Geraldo Freitas da Costa, Vila Teixeira,
+ * Alfenas" não acha nada, e sem o bairro acha.
  *
  * A precisão é de TRECHO DE RUA, não da porta. Para ordenar revendas
  * por distância isso basta: o erro é parecido para todas, e a ordem não
  * muda.
  */
-async function coordenadaDoEndereco(rua, cidade, uf) {
+async function coordenadaDoEndereco(rua, cidade, uf, numero) {
     if (!rua) return null;
 
-    const busca = [rua, cidade, uf].filter(Boolean).join(", ");
+    if (numero) {
+        const comNumero = await buscarNoMapa([rua + " " + numero, cidade, uf].filter(Boolean).join(", "), cidade);
+        if (comNumero) return comNumero;
+    }
 
+    return await buscarNoMapa([rua, cidade, uf].filter(Boolean).join(", "), cidade);
+}
+
+
+async function buscarNoMapa(busca, cidade) {
     try {
         const u = "https://nominatim.openstreetmap.org/search?format=json&limit=1"
                 + "&countrycodes=br&q=" + encodeURIComponent(busca);
@@ -211,12 +224,17 @@ async function coordenadaDoEndereco(rua, cidade, uf) {
 
 
 /**
- * Tenta o CEP e depois o nome da rua. É a ordem certa: CEP de rua
- * devolve o trecho exato, e é mais barato que uma busca por texto.
+ * Tenta o nome da rua e, só se ele falhar, o CEP.
+ *
+ * Já foi o contrário, e estava errado: para muito CEP a BrasilAPI dá a
+ * coordenada do centro da cidade, e não a da rua. O 30360-420, da Raja
+ * Gabaglia, voltava no centro de BH, a uns cinco quilômetros — e a
+ * lista inteira media a distância de lá. O CEP fica para quando não há
+ * rua escrita, ou quando o mapa não conhece a rua.
  */
-async function ondeFica({ cep, rua, cidade, uf }) {
-    const peloCep = await coordenadaDoCep(cep, cidade);
-    if (peloCep) return peloCep;
+async function ondeFica({ cep, rua, numero, cidade, uf }) {
+    const peloEndereco = await coordenadaDoEndereco(rua, cidade, uf, numero);
+    if (peloEndereco) return peloEndereco;
 
-    return await coordenadaDoEndereco(rua, cidade, uf);
+    return await coordenadaDoCep(cep, cidade);
 }
