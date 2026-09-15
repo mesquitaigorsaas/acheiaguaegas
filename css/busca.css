@@ -422,11 +422,10 @@
     background: var(--fundo);
 }
 
+/* Sem logo, a lojinha com botijão e galão: diz "revenda" sem depender
+   do que a pessoa pediu, e é a mesma que o dono vê ao se cadastrar. */
 .revenda .logo-vazia {
-    display: grid;
-    place-items: center;
-    font-size: 22px;
-    color: var(--tinta-fraca);
+    background: var(--fundo) url("../assets/marca/revenda-sem-logo.svg") center / 88% no-repeat;
 }
 
 .revenda .miolo { min-width: 0; }

@@ -99,7 +99,9 @@
     border-radius: 14px;
     border: 1.5px dashed var(--linha);
     background: var(--fundo) center / cover no-repeat;
-    font-size: 26px;
+    /* Sem logo escolhida, a lojinha. A logo, quando vem, entra pelo
+       style da própria caixa e passa por cima desta. */
+    background-image: url("../assets/marca/revenda-sem-logo.svg");
 }
 
 .linha-logo input[type="file"] {

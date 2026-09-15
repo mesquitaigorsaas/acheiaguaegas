@@ -154,7 +154,7 @@ function escolherLogo(evento) {
 
     if (!arquivo) {
         estado.logo = null;
-        previa.textContent = "💧";
+        previa.textContent = "";
         previa.style.backgroundImage = "";
         return;
     }

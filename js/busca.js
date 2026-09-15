@@ -540,7 +540,8 @@ function cartao(r, pedidos, menorTotal) {
 
     const logo = r.logo_url
         ? `<img class="logo" src="${esc(r.logo_url)}" alt="" loading="lazy">`
-        : `<div class="logo logo-vazia" aria-hidden="true">${estado.pedido.some((i) => i.tipo === "gas") ? "🔥" : "💧"}</div>`;
+        // Sem logo, a lojinha do CSS: a mesma de quando a revenda se cadastra.
+        : `<div class="logo logo-vazia" aria-hidden="true"></div>`;
 
     // Com um item só, o detalhamento repetiria o total logo ao lado.
     const detalhe = pedidos > 1

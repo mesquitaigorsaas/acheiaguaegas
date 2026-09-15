@@ -591,9 +591,7 @@ function telaRevenda() {
                 <label for="logo">Logo</label>
                 <div class="linha-logo">
                     <div class="previa-logo" id="previa-logo"
-                         style="${revenda.logo_url ? `background-image:url(${esc(revenda.logo_url)})` : ""}">
-                        ${revenda.logo_url ? "" : "💧"}
-                    </div>
+                         style="${revenda.logo_url ? `background-image:url(${esc(revenda.logo_url)})` : ""}"></div>
                     <input type="file" id="logo" accept="image/png,image/jpeg,image/webp">
                 </div>
                 <p class="dica">Quadrada fica melhor. Até 2 MB.</p>
