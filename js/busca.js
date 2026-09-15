@@ -89,6 +89,8 @@ async function usarEndereco(evento) {
     evento.preventDefault();
 
     const rua = document.getElementById("rua").value.trim();
+    const numero = document.getElementById("numero").value.trim();
+    const bairro = document.getElementById("bairro").value.trim();
     const cidade = document.getElementById("cidade").value.trim();
 
     if (!rua) {
@@ -118,10 +120,17 @@ async function usarEndereco(evento) {
         return;
     }
 
+    // "Rua X, 120 - Centro, Alfenas". O que a pessoa escreveu, e não o
+    // que o mapa entendeu: é isso que vai para o entregador.
+    const escrito = [rua, numero].filter(Boolean).join(", ")
+        + (bairro ? " - " + bairro : "")
+        + (cidade ? ", " + cidade : "");
+
     definirOnde({
         lat: achado.lat,
         lng: achado.lng,
-        escrito: [rua, cidade].filter(Boolean).join(", ")
+        escrito,
+        endereco: escrito
     });
 }
 
@@ -448,8 +457,14 @@ function cartao(r, pedidos, menorTotal) {
     // WhatsApp um item que a revenda não vende começa a conversa com
     // uma recusa.
     const temEstes = estado.pedido.filter((i) => r.precos && r.precos[i.id] !== undefined);
-    const texto = "Olá! Vi no Achei Água & Gás. Você entrega "
+    let texto = "Olá! Vi no Achei Água & Gás. Você entrega "
         + temEstes.map((i) => i.nome).join(" e ") + " aqui?";
+
+    // Pelo GPS não existe endereço escrito, e mandar coordenada para o
+    // balcão não ajuda ninguém. Na retirada, o endereço não interessa.
+    if (estado.modo === "entrega" && estado.onde && estado.onde.endereco) {
+        texto += "\nEndereço: " + estado.onde.endereco;
+    }
 
     const logo = r.logo_url
         ? `<img class="logo" src="${esc(r.logo_url)}" alt="" loading="lazy">`

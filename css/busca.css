@@ -163,6 +163,14 @@
 .passo:not(.pronto) .botao-trocar,
 .passo:not(.pronto) .mapa-onde { display: none; }
 
+/* Número estreito, bairro com o resto. Número não passa de cinco
+   dígitos, e bairro de nome comprido é o comum. */
+.linha-endereco {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 12px;
+}
+
 /* O resumo e o botão ficam na mesma linha; o mapa desce para a de baixo. */
 .passo.pronto { flex-wrap: wrap; }
 
