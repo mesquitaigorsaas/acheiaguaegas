@@ -171,54 +171,74 @@ async function enderecoDoCep(cep) {
 /**
  * A coordenada de um endereço escrito.
  *
- * Primeiro COM o número, que em cidade grande separa um trecho do outro:
- * a Raja Gabaglia atravessa vários bairros de BH, e sem o número o pino
- * pode cair no bairro errado. Sem resultado, tenta de novo SEM o número,
- * que é o que resolve em cidade pequena, onde o mapa quase não tem
- * numeração.
+ * O mapa gratuito não conhece a numeração da maioria das ruas do Brasil:
+ * com ou sem número, devolve o mesmo punhado de TRECHOS da rua. Numa
+ * avenida comprida isso é o problema inteiro — a Raja Gabaglia, em BH,
+ * volta em quase trinta pedaços espalhados por dez bairros, e ficar com
+ * o primeiro punha o pino em Santa Lúcia para quem mora no São Bento.
  *
- * Bairro nunca vai: a busca falha quando o mapa discorda do bairro que a
+ * Quem escolhe o trecho é o BAIRRO, que o CEP já preencheu:
+ *   1. o trecho que o mapa diz ser daquele bairro;
+ *   2. se o nome não bate, o trecho mais perto do centro do bairro;
+ *   3. sem bairro, ou sem o bairro no mapa, o primeiro trecho.
+ *
+ * O bairro não vai DENTRO da busca: quando o mapa discorda do nome que a
  * pessoa escreveu — "Rua Geraldo Freitas da Costa, Vila Teixeira,
- * Alfenas" não acha nada, e sem o bairro acha.
- *
- * A precisão é de TRECHO DE RUA, não da porta. Para ordenar revendas
- * por distância isso basta: o erro é parecido para todas, e a ordem não
- * muda.
+ * Alfenas" —, a busca não acha nada. Por isso ele só escolhe entre o que
+ * voltou.
  */
-async function coordenadaDoEndereco(rua, cidade, uf, numero) {
+async function coordenadaDoEndereco(rua, cidade, uf, bairro) {
     if (!rua) return null;
 
-    if (numero) {
-        const comNumero = await buscarNoMapa([rua + " " + numero, cidade, uf].filter(Boolean).join(", "), cidade);
-        if (comNumero) return comNumero;
-    }
+    const trechos = await buscarNoMapa([rua, cidade, uf].filter(Boolean).join(", "), cidade, 40);
+    if (!trechos.length) return null;
 
-    return await buscarNoMapa([rua, cidade, uf].filter(Boolean).join(", "), cidade);
+    const escolhido = bairro ? await trechoDoBairro(trechos, bairro, cidade, uf) : null;
+    const t = escolhido || trechos[0];
+
+    return { lat: t.lat, lng: t.lng, como: "endereco", escrito: t.escrito };
 }
 
 
-async function buscarNoMapa(busca, cidade) {
+async function trechoDoBairro(trechos, bairro, cidade, uf) {
+    const alvo = achatar(bairro).trim();
+
+    // O segundo pedaço do nome é o bairro: "Avenida X, São Bento, ...".
+    const doBairro = trechos.find((t) => achatar(t.escrito.split(",")[1]).trim() === alvo);
+    if (doBairro) return doBairro;
+
+    const [centro] = await buscarNoMapa([bairro, cidade, uf].filter(Boolean).join(", "), cidade, 1);
+    if (!centro) return null;
+
+    // Graus ao quadrado bastam para achar o mais perto: dentro de uma
+    // cidade, a curvatura da Terra não muda qual trecho ganha.
+    const longe = (t) => (t.lat - centro.lat) ** 2 + (t.lng - centro.lng) ** 2;
+    return trechos.reduce((melhor, t) => (longe(t) < longe(melhor) ? t : melhor));
+}
+
+
+/** Os lugares que o mapa acha para um texto, só os da cidade esperada. */
+async function buscarNoMapa(busca, cidade, quantos) {
     try {
-        const u = "https://nominatim.openstreetmap.org/search?format=json&limit=1"
+        const u = "https://nominatim.openstreetmap.org/search?format=json&limit=" + quantos
                 + "&countrycodes=br&q=" + encodeURIComponent(busca);
 
         // Mais folga que o CEP: o Nominatim é gratuito e compartilhado, e
         // passar de 4 segundos é comum. Com o prazo curto, endereço certo
         // voltava como "não achei".
         const r = await fetch(u, { headers: { Accept: "application/json" }, signal: prazoCurto(10000) });
-        if (!r.ok) return null;
+        if (!r.ok) return [];
 
         const j = await r.json();
-        if (!j.length) return null;
 
-        // Mesma desconfiança do CEP: se a resposta não fala da cidade
-        // esperada, é outra rua de mesmo nome em outro lugar.
-        if (cidade && !achatar(j[0].display_name).includes(achatar(cidade))) return null;
-
-        return { lat: Number(j[0].lat), lng: Number(j[0].lon), como: "endereco", escrito: j[0].display_name };
+        // Mesma desconfiança do CEP: resposta que não fala da cidade
+        // esperada é outra rua de mesmo nome em outro lugar.
+        return j
+            .filter((l) => !cidade || achatar(l.display_name).includes(achatar(cidade)))
+            .map((l) => ({ lat: Number(l.lat), lng: Number(l.lon), escrito: l.display_name }));
     } catch (e) {
         console.warn("Não consegui a coordenada do endereço:", e);
-        return null;
+        return [];
     }
 }
 
@@ -227,13 +247,13 @@ async function buscarNoMapa(busca, cidade) {
  * Tenta o nome da rua e, só se ele falhar, o CEP.
  *
  * Já foi o contrário, e estava errado: para muito CEP a BrasilAPI dá a
- * coordenada do centro da cidade, e não a da rua. O 30360-420, da Raja
- * Gabaglia, voltava no centro de BH, a uns cinco quilômetros — e a
- * lista inteira media a distância de lá. O CEP fica para quando não há
- * rua escrita, ou quando o mapa não conhece a rua.
+ * coordenada do centro da cidade, e não a da rua — o mesmo ponto no
+ * centro de BH para CEPs a quilômetros um do outro. A lista inteira
+ * media a distância de lá. O CEP fica para quando não há rua escrita,
+ * ou quando o mapa não conhece a rua.
  */
-async function ondeFica({ cep, rua, numero, cidade, uf }) {
-    const peloEndereco = await coordenadaDoEndereco(rua, cidade, uf, numero);
+async function ondeFica({ cep, rua, bairro, cidade, uf }) {
+    const peloEndereco = await coordenadaDoEndereco(rua, cidade, uf, bairro);
     if (peloEndereco) return peloEndereco;
 
     return await coordenadaDoCep(cep, cidade);

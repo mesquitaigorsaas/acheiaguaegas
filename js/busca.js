@@ -227,7 +227,7 @@ async function usarEndereco(evento) {
     const achado = await ondeFica({
         cep: cepDigitado || cepDaRua,
         rua: cepDigitado ? null : campos.rua,
-        numero: campos.numero,
+        bairro: campos.bairro,
         cidade: campos.cidade,
         uf: campos.uf || null
     });
@@ -663,10 +663,10 @@ function completarZap(link) {
     document.getElementById("rua").addEventListener("input", aoDigitarRua);
     document.getElementById("botao-digitar").addEventListener("click", voltarAoEndereco);
 
-    // O CEP acha a rua antes de a pessoa escrever o número, e o número é
-    // o que acerta o pino em cidade grande. Escrito o número, o mapa se
-    // ajusta sozinho, sem precisar tocar em "achar este endereço".
-    document.getElementById("numero").addEventListener("change", () => {
+    // O bairro é o que escolhe o trecho certo de uma avenida comprida.
+    // Corrigido à mão depois de o mapa aparecer, o pino se ajusta
+    // sozinho, sem precisar tocar em "achar este endereço".
+    document.getElementById("bairro").addEventListener("change", () => {
         if (estado.onde && estado.onde.como === "endereco" && document.getElementById("rua").value.trim()) {
             usarEndereco();
         }
