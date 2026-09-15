@@ -575,6 +575,12 @@ function cartao(r, pedidos, menorTotal) {
 
             ${detalhe}
 
+            ${r.endereco
+                // O km diz o quanto; o bairro diz o onde. Quem mora na
+                // cidade confia mais em "Centro" do que em "1,7 km".
+                ? `<p class="endereco-revenda"><span>Endereço:</span> ${esc(r.endereco)}</p>`
+                : ""}
+
             <div class="acao-revenda">
                 <a class="botao botao-zap" href="https://wa.me/${esc(zap)}?text=${encodeURIComponent(texto)}"
                    data-zap="${esc(zap)}" data-texto="${esc(texto)}"

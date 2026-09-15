@@ -334,6 +334,19 @@
     color: var(--tinta-fraca);
 }
 
+/* O endereço da revenda, na largura toda do cartão, logo acima do
+   botão do WhatsApp. */
+.endereco-revenda {
+    grid-column: 1 / -1;
+    font-size: 14px;
+    color: var(--tinta);
+}
+
+.endereco-revenda span {
+    font-weight: 600;
+    color: var(--marinho);
+}
+
 .item-desenho[data-familia="gas"].escolhido {
     background: var(--gas-clara);
     border-color: var(--gas);
