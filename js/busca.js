@@ -7,8 +7,8 @@
 /*
    A tela do cliente, em dois passos e uma lista que se refaz sozinha.
 
-     1. onde você está
-     2. o que você quer — e a lista já aparece embaixo
+     1. o que você quer
+     2. o local da entrega — e a lista já aparece embaixo
 
    NÃO EXISTE BOTÃO DE CONFIRMAR. Quem já disse onde está e marcou o
    botijão respondeu tudo o que a busca precisa; pedir mais um clique
@@ -65,35 +65,8 @@ function avisar(texto, tipo) {
 
 
 /* ==========================================
-   PASSO 1 — ONDE VOCÊ ESTÁ
+   PASSO 2 — O LOCAL DA ENTREGA
 ========================================== */
-
-async function usarGps() {
-    const vez = ++pedidoDeLugar;
-    const botao = document.getElementById("botao-gps");
-    botao.disabled = true;
-    botao.textContent = "Procurando você...";
-    avisar("");
-
-    try {
-        const p = await ondeEstouPeloAparelho();
-
-        if (vez === pedidoDeLugar) {
-            // Escolheu a localização: o endereço meio digitado não vale
-            // mais, e deixá-lo na tela faria parecer que é ele o usado.
-            limparEndereco();
-            definirOnde({ lat: p.lat, lng: p.lng, escrito: "Sua localização agora", como: "gps" });
-        }
-    } catch (erro) {
-        // Sem permissão ou sem sinal: o endereço digitado continua lá,
-        // que é justamente a outra saída.
-        avisar(erro.message, "erro");
-    }
-
-    botao.disabled = false;
-    botao.textContent = "Usar a minha localização";
-}
-
 
 const CAMPOS = ["rua", "numero", "complemento", "bairro", "cidade", "uf"];
 
@@ -134,36 +107,11 @@ let cepDaRua = null;
 let cepProcurado = null;
 
 /*
-   Cada pedido de lugar — GPS, CEP ou endereço — ganha um número, e só a
-   resposta do último vale. Sem isso, o CEP que ainda estava a caminho
-   quando a pessoa tocou no GPS chegava depois e passava por cima dele.
+   Cada busca de lugar ganha um número, e só a resposta da última vale.
+   Sem isso, a busca que o CEP disparou podia chegar depois da que o
+   bairro corrigido disparou, e passar por cima dela.
 */
 let pedidoDeLugar = 0;
-
-function limparEndereco() {
-    CAMPOS.forEach((id) => { document.getElementById(id).value = ""; });
-    cepDaRua = null;
-    cepProcurado = null;
-}
-
-/** Pelo GPS o mapa sobe para baixo do botão e o formulário some. */
-function arrumarPassoOnde(como) {
-    const porGps = como === "gps";
-    const bloco = document.getElementById("lugar-achado");
-    const form = document.getElementById("form-endereco");
-
-    document.querySelector("#passo-onde .ou").hidden = porGps;
-    form.hidden = porGps;
-    document.getElementById("botao-digitar").hidden = !porGps;
-
-    const antes = porGps ? document.getElementById("botao-gps") : form;
-    if (antes.nextElementSibling !== bloco) antes.after(bloco);
-}
-
-function voltarAoEndereco() {
-    arrumarPassoOnde("endereco");
-    document.getElementById("rua").focus();
-}
 
 async function aoDigitarRua() {
     const campoRua = document.getElementById("rua");
@@ -179,8 +127,8 @@ async function aoDigitarRua() {
     const achado = await enderecoDoCep(cep);
     campoRua.classList.remove("buscando");
 
-    // A pessoa tocou no GPS, ou continuou digitando, enquanto o CEP ia
-    // e voltava.
+    // A pessoa continuou digitando, ou já buscou outro endereço, enquanto
+    // o CEP ia e voltava.
     if (vez !== pedidoDeLugar || cepNoCampo(campoRua.value) !== cep) return;
 
     if (!achado) {
@@ -235,11 +183,11 @@ async function usarEndereco(evento) {
     botao.disabled = false;
     botao.textContent = "Achar este endereço";
 
-    // Enquanto o mapa procurava, a pessoa tocou em "usar a minha localização".
+    // Enquanto o mapa procurava, outra busca de lugar começou.
     if (vez !== pedidoDeLugar) return;
 
     if (!achado) {
-        avisar("Não achei esse endereço. Confira a rua e a cidade, ou use o botão de localização.", "erro");
+        avisar("Não achei esse endereço. Confira a rua, o bairro e a cidade.", "erro");
         return;
     }
 
@@ -267,9 +215,7 @@ function definirOnde(onde) {
     resumo.innerHTML = "Buscando perto de<small>" + esc(onde.escrito) + "</small>";
     resumo.hidden = false;
 
-    arrumarPassoOnde(onde.como);
     desenharMapa(onde);
-    document.getElementById("passo-oque").hidden = false;
 
     if (estado.pedido.length) procurarLogo();
 }
@@ -300,7 +246,7 @@ function desenharMapa(onde) {
 
 
 /* ==========================================
-   PASSO 2 — O QUE VOCÊ QUER
+   PASSO 1 — O QUE VOCÊ QUER
 ========================================== */
 
 /**
@@ -429,6 +375,10 @@ function escolherModo(modo) {
 
     document.getElementById("titulo-resultados").textContent =
         modo === "retirada" ? "Onde buscar" : "Quem entrega aí";
+
+    // Na retirada nada é entregue: o endereço é só de onde a pessoa sai.
+    document.getElementById("titulo-onde").textContent =
+        modo === "retirada" ? "Onde você está" : "Local da entrega";
 
     if (estado.onde && estado.pedido.length) procurar();
 }
@@ -646,8 +596,7 @@ function completarZap(link) {
     let texto = link.dataset.texto;
     const campos = lerCampos();
 
-    // Pelo GPS não existe endereço escrito, e mandar coordenada para o
-    // balcão não ajuda ninguém. Na retirada, o endereço não interessa.
+    // Na retirada, o endereço não interessa ao balcão.
     if (estado.modo === "entrega" && estado.onde && estado.onde.como === "endereco" && campos.rua) {
         texto += "\nEndereço: " + enderecoEscrito(campos);
     }
@@ -661,10 +610,8 @@ function completarZap(link) {
 ========================================== */
 
 (async function iniciar() {
-    document.getElementById("botao-gps").addEventListener("click", usarGps);
     document.getElementById("form-endereco").addEventListener("submit", usarEndereco);
     document.getElementById("rua").addEventListener("input", aoDigitarRua);
-    document.getElementById("botao-digitar").addEventListener("click", voltarAoEndereco);
 
     // O bairro é o que escolhe o trecho certo de uma avenida comprida.
     // Corrigido à mão depois de o mapa aparecer, o pino se ajusta
@@ -712,8 +659,11 @@ function completarZap(link) {
     // Quem já disse onde mora não precisa dizer de novo.
     try {
         const lembrado = JSON.parse(localStorage.getItem(GUARDADO) || "null");
-        if (lembrado && Number.isFinite(lembrado.lat)) {
-            if (lembrado.campos) preencherCampos(lembrado.campos);
+        // Só endereço escrito volta. O lugar guardado pelo GPS, de quando
+        // o site tinha o botão, fica para trás: sem os campos preenchidos,
+        // a pessoa veria um mapa que não tem como conferir nem corrigir.
+        if (lembrado && Number.isFinite(lembrado.lat) && lembrado.campos) {
+            preencherCampos(lembrado.campos);
             definirOnde(lembrado);
         }
     } catch (e) {

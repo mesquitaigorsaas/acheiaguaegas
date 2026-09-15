@@ -194,8 +194,6 @@
    item depois de a pessoa tirá-lo no x. */
 [hidden] { display: none !important; }
 
-.botao-digitar { margin-top: 12px; }
-
 .mapa-onde iframe {
     display: block;
     width: 100%;

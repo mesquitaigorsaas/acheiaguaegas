@@ -40,17 +40,56 @@
 
         <p id="recado" class="recado" role="alert" hidden></p>
 
-        <!-- PASSO 1 -->
-        <section class="passo" id="passo-onde">
-            <h2>Onde você está?</h2>
-            <p class="explica">É por aqui que a gente mede quem está mais perto de você.</p>
+        <!-- PASSO 1 — primeiro o que a pessoa precisa, e só depois onde.
+             É a ordem em que ela pensa: "acabou o gás", e não "moro na
+             rua tal". -->
+        <section class="passo" id="passo-oque">
+            <h2>O que você quer?</h2>
+            <p class="explica">
+                Marque e a lista aparece embaixo. Pode juntar gás e água:
+                chega tudo numa entrega só.
+            </p>
 
             <div class="corpo">
-                <button type="button" class="botao" id="botao-gps">
-                    Usar a minha localização
-                </button>
+                <div class="tipos">
+                    <button type="button" class="tipo" data-tipo="gas">
+                        <span class="emoji" aria-hidden="true">🔥</span>
+                        Gás
+                    </button>
+                    <button type="button" class="tipo" data-tipo="agua">
+                        <span class="emoji" aria-hidden="true">💧</span>
+                        Água
+                    </button>
+                </div>
 
-                <div class="ou">ou digite o endereço</div>
+                <div class="itens" id="itens"></div>
+
+                <div class="meu-pedido" id="meu-pedido" hidden></div>
+
+                <!-- Como a pessoa quer receber. Muda a lista inteira: na
+                     retirada entram as que só atendem no balcão, e o raio
+                     de entrega delas deixa de valer. -->
+                <div class="modos" id="modos">
+                    <button type="button" class="modo escolhido" data-modo="entrega">
+                        Quero que entreguem
+                    </button>
+                    <button type="button" class="modo" data-modo="retirada">
+                        Vou buscar
+                    </button>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- PASSO 2 — só endereço escrito. O GPS saiu: dentro de casa ele
+             erra de quarteirão, e o entregador precisa da rua e do número
+             de qualquer jeito. -->
+        <section class="passo" id="passo-onde">
+            <h2 id="titulo-onde">Local da entrega</h2>
+            <p class="explica">É por ele que a gente mede quem está mais perto de você.</p>
+
+            <div class="corpo">
 
                 <form id="form-endereco" novalidate>
                     <div class="campo">
@@ -103,62 +142,15 @@
                 </form>
             </div>
 
-            <!-- O ponto que a busca vai usar, no mapa. GPS de celular
-                 dentro de casa erra de quarteirão, e o endereço escrito
-                 pode cair na rua de mesmo nome do outro lado da cidade:
-                 ver o pino é o jeito de a pessoa perceber antes de
-                 comparar distâncias medidas do lugar errado.
-
-                 O bloco muda de lugar: pelo GPS fica logo embaixo do
-                 botão, e o formulário some; pelo endereço fica embaixo
-                 do formulário. -->
+            <!-- O ponto que a busca vai usar, no mapa. O endereço escrito
+                 pode cair na rua de mesmo nome do outro lado da cidade, ou
+                 no trecho errado de uma avenida comprida: ver o pino é o
+                 jeito de a pessoa perceber antes de comparar distâncias
+                 medidas do lugar errado. -->
             <div id="lugar-achado">
                 <p class="onde-achado" id="resumo-onde" hidden></p>
                 <div class="mapa-onde" id="mapa-onde" hidden></div>
-                <button type="button" class="botao-vazio botao-digitar" id="botao-digitar" hidden>
-                    Prefiro digitar o endereço
-                </button>
             </div>
-        </section>
-
-        <!-- PASSO 2 -->
-        <section class="passo" id="passo-oque" hidden>
-            <h2>O que você quer?</h2>
-            <p class="explica">
-                Marque e a lista aparece embaixo. Pode juntar gás e água:
-                chega tudo numa entrega só.
-            </p>
-
-            <div class="corpo">
-                <div class="tipos">
-                    <button type="button" class="tipo" data-tipo="gas">
-                        <span class="emoji" aria-hidden="true">🔥</span>
-                        Gás
-                    </button>
-                    <button type="button" class="tipo" data-tipo="agua">
-                        <span class="emoji" aria-hidden="true">💧</span>
-                        Água
-                    </button>
-                </div>
-
-                <div class="itens" id="itens"></div>
-
-                <div class="meu-pedido" id="meu-pedido" hidden></div>
-
-                <!-- Como a pessoa quer receber. Muda a lista inteira: na
-                     retirada entram as que só atendem no balcão, e o raio
-                     de entrega delas deixa de valer. -->
-                <div class="modos" id="modos">
-                    <button type="button" class="modo escolhido" data-modo="entrega">
-                        Quero que entreguem
-                    </button>
-                    <button type="button" class="modo" data-modo="retirada">
-                        Vou buscar
-                    </button>
-                </div>
-
-            </div>
-
         </section>
 
         <!-- PASSO 3 -->
