@@ -15,9 +15,10 @@
    para "fechar o pedido" é cobrar um passo que não decide nada. Marcar
    outro item, ou trocar entre entregar e buscar, refaz a lista na hora.
 
-   O passo do endereço encolhe para um resumo com botão de trocar. O do
-   pedido fica aberto, porque é nele que a pessoa continua mexendo
-   enquanto olha a lista.
+   Os dois passos ficam abertos. O do endereço não encolhe depois de
+   achado: com o CEP a rua se preenche e o mapa já aparece, mas o
+   número e o complemento a pessoa ainda vai escrever — sumir com os
+   campos nessa hora era tirar da mão dela o que estava digitando.
 
    Sem tela nova de propósito: endereço errado é o erro mais comum aqui,
    e o mais caro, já que decide a lista inteira. Voltar para corrigir
@@ -75,7 +76,7 @@ async function usarGps() {
 
     try {
         const p = await ondeEstouPeloAparelho();
-        definirOnde({ lat: p.lat, lng: p.lng, escrito: "Sua localização agora" });
+        definirOnde({ lat: p.lat, lng: p.lng, escrito: "Sua localização agora", como: "gps" });
     } catch (erro) {
         avisar(erro.message, "erro");
     }
@@ -85,31 +86,105 @@ async function usarGps() {
 }
 
 
+const CAMPOS = ["rua", "numero", "complemento", "bairro", "cidade", "uf"];
+
+function lerCampos() {
+    const campos = {};
+    CAMPOS.forEach((id) => { campos[id] = document.getElementById(id).value.trim(); });
+    return campos;
+}
+
+function preencherCampos(campos) {
+    CAMPOS.forEach((id) => {
+        if (campos[id] !== undefined) document.getElementById(id).value = campos[id];
+    });
+}
+
+/** "Rua X, 120, apto 302 - Centro, Alfenas/MG". */
+function enderecoEscrito(c) {
+    const cidade = [c.cidade, c.uf].filter(Boolean).join("/");
+
+    return [c.rua, c.numero, c.complemento].filter(Boolean).join(", ")
+        + (c.bairro ? " - " + c.bairro : "")
+        + (cidade ? ", " + cidade : "");
+}
+
+/** O campo inteiro é CEP, e não nome de rua: "Rua 10" tem dígito e não é. */
+function cepNoCampo(texto) {
+    const so = texto.replace(/\D/g, "");
+    return so.length === 8 && /^[\d\s.-]+$/.test(texto.trim()) ? so : null;
+}
+
+
+/*
+   O CEP de que veio a rua que está no campo. Sai quando a pessoa mexe
+   na rua: com a rua trocada à mão, a coordenada do CEP antigo mediria
+   a distância do lugar errado.
+*/
+let cepDaRua = null;
+let cepProcurado = null;
+
+async function aoDigitarRua() {
+    const campoRua = document.getElementById("rua");
+    const cep = cepNoCampo(campoRua.value);
+
+    cepDaRua = null;
+    if (!cep) { cepProcurado = null; return; }
+    if (cep === cepProcurado) return;
+    cepProcurado = cep;
+
+    campoRua.classList.add("buscando");
+    const achado = await enderecoDoCep(cep);
+    campoRua.classList.remove("buscando");
+
+    // A pessoa continuou digitando enquanto o CEP ia e voltava.
+    if (cepNoCampo(campoRua.value) !== cep) return;
+
+    if (!achado) {
+        cepProcurado = null;
+        avisar("Não achei esse CEP. Confira os números, ou escreva o nome da rua.", "erro");
+        return;
+    }
+
+    avisar("");
+    campoRua.value = achado.rua;
+    preencherCampos({ bairro: achado.bairro, cidade: achado.cidade, uf: achado.uf });
+    cepDaRua = cep;
+
+    if (!achado.rua) {
+        avisar("Esse CEP é da cidade inteira. Escreva o nome da rua.");
+        campoRua.focus();
+        return;
+    }
+
+    // A rua veio; o que falta é com a pessoa. O mapa já aparece
+    // enquanto ela digita o número.
+    document.getElementById("numero").focus();
+    usarEndereco();
+}
+
+
 async function usarEndereco(evento) {
-    evento.preventDefault();
+    if (evento) evento.preventDefault();
 
-    const rua = document.getElementById("rua").value.trim();
-    const numero = document.getElementById("numero").value.trim();
-    const bairro = document.getElementById("bairro").value.trim();
-    const cidade = document.getElementById("cidade").value.trim();
+    const campos = lerCampos();
 
-    if (!rua) {
+    if (!campos.rua) {
         avisar("Escreva a rua, ou use o CEP no lugar dela.", "erro");
         return;
     }
 
-    const botao = evento.target.querySelector("button[type=submit]");
+    const botao = document.querySelector("#form-endereco button[type=submit]");
     botao.disabled = true;
     botao.textContent = "Procurando...";
     avisar("");
 
-    // Só dígitos e oito deles: é CEP, e não nome de rua.
-    const talvezCep = rua.replace(/\D/g, "");
+    const cepDigitado = cepNoCampo(campos.rua);
     const achado = await ondeFica({
-        cep: talvezCep.length === 8 ? talvezCep : null,
-        rua: talvezCep.length === 8 ? null : rua,
-        cidade,
-        uf: "MG"
+        cep: cepDigitado || cepDaRua,
+        rua: cepDigitado ? null : campos.rua,
+        cidade: campos.cidade,
+        uf: campos.uf || null
     });
 
     botao.disabled = false;
@@ -120,17 +195,12 @@ async function usarEndereco(evento) {
         return;
     }
 
-    // "Rua X, 120 - Centro, Alfenas". O que a pessoa escreveu, e não o
-    // que o mapa entendeu: é isso que vai para o entregador.
-    const escrito = [rua, numero].filter(Boolean).join(", ")
-        + (bairro ? " - " + bairro : "")
-        + (cidade ? ", " + cidade : "");
-
     definirOnde({
         lat: achado.lat,
         lng: achado.lng,
-        escrito,
-        endereco: escrito
+        escrito: enderecoEscrito(campos),
+        como: "endereco",
+        campos
     });
 }
 
@@ -145,11 +215,11 @@ function definirOnde(onde) {
         // funciona igual; só não lembra na próxima visita.
     }
 
-    document.getElementById("resumo-onde").innerHTML =
-        "Buscando perto de<small>" + esc(onde.escrito) + "</small>";
+    const resumo = document.getElementById("resumo-onde");
+    resumo.innerHTML = "Buscando perto de<small>" + esc(onde.escrito) + "</small>";
+    resumo.hidden = false;
 
     desenharMapa(onde);
-    fecharPasso("passo-onde");
     document.getElementById("passo-oque").hidden = false;
 
     if (estado.pedido.length) procurarLogo();
@@ -288,7 +358,11 @@ function desenharPedido() {
                     title="Tirar do pedido">
                 ${esc(i.apelido || i.nome)} <span aria-hidden="true">&times;</span>
             </button>
-        `).join("");
+        `).join("")
+        // Com dois itens ou mais, tirar um por um já é trabalho.
+        + (estado.pedido.length > 1
+            ? `<button type="button" class="limpar-pedido" data-limpar-pedido>Limpar tudo</button>`
+            : "");
 
 }
 
@@ -309,21 +383,6 @@ function escolherModo(modo) {
         modo === "retirada" ? "Onde buscar" : "Quem entrega aí";
 
     if (estado.onde && estado.pedido.length) procurar();
-}
-
-
-/* ==========================================
-   OS PASSOS ABRINDO E FECHANDO
-========================================== */
-
-function fecharPasso(id) {
-    document.getElementById(id).classList.add("pronto");
-}
-
-function abrirPasso() {
-    const passo = document.getElementById("passo-onde");
-    passo.classList.remove("pronto");
-    passo.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 
@@ -477,14 +536,9 @@ function cartao(r, pedidos, menorTotal) {
     // WhatsApp um item que a revenda não vende começa a conversa com
     // uma recusa.
     const temEstes = estado.pedido.filter((i) => r.precos && r.precos[i.id] !== undefined);
-    let texto = "Olá! Vi no Achei Água & Gás. Você entrega "
+    // O endereço entra só na hora do clique, em completarZap().
+    const texto = "Olá! Vi no Achei Água & Gás. Você entrega "
         + temEstes.map((i) => i.nome).join(" e ") + " aqui?";
-
-    // Pelo GPS não existe endereço escrito, e mandar coordenada para o
-    // balcão não ajuda ninguém. Na retirada, o endereço não interessa.
-    if (estado.modo === "entrega" && estado.onde && estado.onde.endereco) {
-        texto += "\nEndereço: " + estado.onde.endereco;
-    }
 
     const logo = r.logo_url
         ? `<img class="logo" src="${esc(r.logo_url)}" alt="" loading="lazy">`
@@ -525,12 +579,41 @@ function cartao(r, pedidos, menorTotal) {
 
             <div class="acao-revenda">
                 <a class="botao botao-zap" href="https://wa.me/${esc(zap)}?text=${encodeURIComponent(texto)}"
+                   data-zap="${esc(zap)}" data-texto="${esc(texto)}"
                    target="_blank" rel="noopener">
                     Pedir no WhatsApp
                 </a>
             </div>
         </article>
     `;
+}
+
+
+/** Zera o pedido: desmarca tudo e tira a lista, que respondia a ele. */
+function limparPedido() {
+    estado.pedido = [];
+    abrirTipo(estado.tipo);
+    desenharPedido();
+    document.getElementById("resultados").hidden = true;
+}
+
+
+/**
+ * O endereço entra na mensagem na hora do clique, e não quando o cartão
+ * foi desenhado. O mapa e a lista aparecem assim que o CEP é achado, e
+ * o número e o complemento costumam ser digitados depois disso.
+ */
+function completarZap(link) {
+    let texto = link.dataset.texto;
+    const campos = lerCampos();
+
+    // Pelo GPS não existe endereço escrito, e mandar coordenada para o
+    // balcão não ajuda ninguém. Na retirada, o endereço não interessa.
+    if (estado.modo === "entrega" && estado.onde && estado.onde.como === "endereco" && campos.rua) {
+        texto += "\nEndereço: " + enderecoEscrito(campos);
+    }
+
+    link.href = "https://wa.me/" + link.dataset.zap + "?text=" + encodeURIComponent(texto);
 }
 
 
@@ -541,6 +624,7 @@ function cartao(r, pedidos, menorTotal) {
 (async function iniciar() {
     document.getElementById("botao-gps").addEventListener("click", usarGps);
     document.getElementById("form-endereco").addEventListener("submit", usarEndereco);
+    document.getElementById("rua").addEventListener("input", aoDigitarRua);
     document.getElementById("so-abertas").addEventListener("change", (evento) => {
         estado.soAbertas = evento.target.checked;
         desenharLista();
@@ -562,8 +646,10 @@ function cartao(r, pedidos, menorTotal) {
         const tirar = evento.target.closest("[data-tirar]");
         if (tirar) { alternarItem(tirar.dataset.tirar); return; }
 
-        const voltar = evento.target.closest("[data-voltar]");
-        if (voltar) abrirPasso();
+        if (evento.target.closest("[data-limpar-pedido]")) { limparPedido(); return; }
+
+        const zap = evento.target.closest(".botao-zap");
+        if (zap) completarZap(zap);
     });
 
     try {
@@ -579,7 +665,10 @@ function cartao(r, pedidos, menorTotal) {
     // Quem já disse onde mora não precisa dizer de novo.
     try {
         const lembrado = JSON.parse(localStorage.getItem(GUARDADO) || "null");
-        if (lembrado && Number.isFinite(lembrado.lat)) definirOnde(lembrado);
+        if (lembrado && Number.isFinite(lembrado.lat)) {
+            if (lembrado.campos) preencherCampos(lembrado.campos);
+            definirOnde(lembrado);
+        }
     } catch (e) {
         // Nada guardado, ou guardado torto. Começa do zero.
     }

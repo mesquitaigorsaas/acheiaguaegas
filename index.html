@@ -58,8 +58,8 @@
                         <input type="text" id="rua" placeholder="Escreva a rua, ou use o CEP" autocomplete="address-line1">
                     </div>
 
-                    <!-- Número e bairro não entram na busca do mapa, que com
-                         eles quase não acha nada. Vão na mensagem do
+                    <!-- Número e complemento não entram na busca do mapa, que
+                         com eles quase não acha nada. Vão na mensagem do
                          WhatsApp: é o que o entregador precisa. -->
                     <div class="linha-endereco">
                         <div class="campo">
@@ -68,22 +68,42 @@
                         </div>
 
                         <div class="campo">
-                            <label for="bairro">Bairro</label>
-                            <input type="text" id="bairro" autocomplete="address-level3">
+                            <label for="complemento">Complemento</label>
+                            <input type="text" id="complemento" placeholder="Apto, bloco, casa dos fundos" autocomplete="address-line2">
                         </div>
                     </div>
 
                     <div class="campo">
-                        <label for="cidade">Cidade</label>
-                        <input type="text" id="cidade" autocomplete="address-level2">
+                        <label for="bairro">Bairro</label>
+                        <input type="text" id="bairro" autocomplete="address-level3">
+                    </div>
+
+                    <div class="linha-endereco estado-no-fim">
+                        <div class="campo">
+                            <label for="cidade">Cidade</label>
+                            <input type="text" id="cidade" autocomplete="address-level2">
+                        </div>
+
+                        <div class="campo">
+                            <label for="uf">Estado</label>
+                            <select id="uf" autocomplete="address-level1">
+                                <option value=""></option>
+                                <option>AC</option><option>AL</option><option>AM</option><option>AP</option>
+                                <option>BA</option><option>CE</option><option>DF</option><option>ES</option>
+                                <option>GO</option><option>MA</option><option>MG</option><option>MS</option>
+                                <option>MT</option><option>PA</option><option>PB</option><option>PE</option>
+                                <option>PI</option><option>PR</option><option>RJ</option><option>RN</option>
+                                <option>RO</option><option>RR</option><option>RS</option><option>SC</option>
+                                <option>SE</option><option>SP</option><option>TO</option>
+                            </select>
+                        </div>
                     </div>
 
                     <button type="submit" class="botao-vazio">Achar este endereço</button>
                 </form>
             </div>
 
-            <div class="resumo-passo" id="resumo-onde"></div>
-            <button type="button" class="botao-vazio botao-trocar" data-voltar="onde">Trocar</button>
+            <p class="onde-achado" id="resumo-onde" hidden></p>
 
             <!-- O ponto que a busca vai usar, no mapa. GPS de celular
                  dentro de casa erra de quarteirão, e o endereço escrito

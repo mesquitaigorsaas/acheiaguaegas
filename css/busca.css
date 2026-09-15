@@ -160,22 +160,32 @@
 }
 
 .passo:not(.pronto) .resumo-passo,
-.passo:not(.pronto) .botao-trocar,
-.passo:not(.pronto) .mapa-onde { display: none; }
+.passo:not(.pronto) .botao-trocar { display: none; }
 
-/* Número estreito, bairro com o resto. Número não passa de cinco
-   dígitos, e bairro de nome comprido é o comum. */
+/* Dois campos por linha: número e complemento, cidade e estado. O
+   pequeno de cada par tem largura fixa, e o outro fica com o resto. */
 .linha-endereco {
     display: grid;
-    grid-template-columns: 110px 1fr;
+    grid-template-columns: 110px minmax(0, 1fr);
     gap: 12px;
 }
 
-/* O resumo e o botão ficam na mesma linha; o mapa desce para a de baixo. */
-.passo.pronto { flex-wrap: wrap; }
+.linha-endereco.estado-no-fim { grid-template-columns: minmax(0, 1fr) 96px; }
 
-.mapa-onde {
-    flex-basis: 100%;
+/* O lugar achado, embaixo do formulário, e o formulário continua
+   aberto em cima: a pessoa ainda pode estar digitando o número. */
+.onde-achado {
+    margin: 18px 0 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--marinho);
+}
+
+.onde-achado small {
+    display: block;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--tinta-fraca);
 }
 
 .mapa-onde iframe {
@@ -316,6 +326,18 @@
     font-size: 12px;
     font-weight: 500;
     color: var(--tinta-fraca);
+}
+
+.limpar-pedido {
+    margin-left: auto;
+    padding: 8px 12px;
+    background: none;
+    border: none;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--vermelho);
+    text-decoration: underline;
+    cursor: pointer;
 }
 
 .item-desenho[data-familia="gas"].escolhido {

@@ -129,6 +129,46 @@ async function coordenadaDoCep(cep, cidadeEsperada) {
 
 
 /**
+ * O endereço de um CEP, para preencher o formulário sozinho.
+ *
+ * ViaCEP primeiro: é o que mais acerta nome de rua e bairro. A BrasilAPI
+ * fica de reserva, porque um serviço gratuito fora do ar não pode travar
+ * quem só quer pedir um botijão.
+ *
+ * Rua vazia é CEP da cidade inteira, comum em cidade pequena: a cidade e
+ * o estado vêm, e a rua a pessoa escreve.
+ */
+async function enderecoDoCep(cep) {
+    const so = String(cep || "").replace(/\D/g, "");
+    if (so.length !== 8) return null;
+
+    try {
+        const r = await fetch("https://viacep.com.br/ws/" + so + "/json/", { signal: prazoCurto(6000) });
+        if (r.ok) {
+            const j = await r.json();
+            // O ViaCEP respondeu e disse que o CEP não existe. Perguntar
+            // de novo à BrasilAPI só atrasaria a mesma resposta.
+            if (!j || j.erro) return null;
+            return { rua: j.logradouro || "", bairro: j.bairro || "", cidade: j.localidade || "", uf: j.uf || "" };
+        }
+    } catch (e) {
+        console.warn("ViaCEP não respondeu:", e);
+    }
+
+    try {
+        const r = await fetch("https://brasilapi.com.br/api/cep/v1/" + so, { signal: prazoCurto(6000) });
+        if (!r.ok) return null;
+
+        const j = await r.json();
+        return { rua: j.street || "", bairro: j.neighborhood || "", cidade: j.city || "", uf: j.state || "" };
+    } catch (e) {
+        console.warn("CEP sem endereço:", e);
+        return null;
+    }
+}
+
+
+/**
  * A coordenada de um endereço escrito.
  *
  * A busca vai SEM o número e SEM o bairro, de propósito. Com número,
