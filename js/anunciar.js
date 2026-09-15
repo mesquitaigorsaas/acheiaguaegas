@@ -318,7 +318,7 @@ async function aoCadastrar(evento) {
         return;
     }
 
-    mostrarPronto(dados);
+    mostrarPronto(dados, data && data.revenda_id);
 }
 
 
@@ -342,12 +342,21 @@ async function mensagemDoErro(error, data) {
 }
 
 
-function mostrarPronto(dados) {
+function mostrarPronto(dados, revendaId) {
     avisar("");
     document.getElementById("form-cadastro").hidden = true;
 
     document.getElementById("resumo-pronto").textContent =
         dados.nome + " está cadastrada. Entre com " + dados.email + ".";
+
+    // O Pix aparece aqui mesmo, antes do botão de entrar: quem acabou de
+    // criar a conta ainda está com o celular na mão. Quem sair sem pagar
+    // encontra a mesma caixa ao entrar, pelo entrar.html.
+    desenharPagamento(document.getElementById("pagar-cadastro"), {
+        id: revendaId,
+        nome: dados.nome,
+        cnpj: dados.cnpj
+    });
 
     document.getElementById("bloco-pronto").hidden = false;
     window.scrollTo({ top: 0, behavior: "smooth" });

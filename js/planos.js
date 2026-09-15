@@ -7,12 +7,12 @@
 /*
    Os planos, num lugar só.
 
-   R$ 5,00 por mês, ou R$ 50,00 por ano. O anual sai por dez meses:
+   R$ 9,90 por mês, ou R$ 99,00 por ano. O anual sai por dez meses:
    dois de graça para quem paga adiantado.
 
-   Estes valores são só para MOSTRAR. Quem cobra é o servidor, e os
-   números de verdade estão na Edge Function. Se viessem daqui,
-   bastaria mudar o campo no navegador para assinar por um centavo.
+   O preço daqui vai no QR Code do Pix. Mexer nele pelo navegador não
+   libera nada: quem ativa a revenda é a gente, depois de conferir o
+   comprovante e o valor que caiu na conta.
 
    Por que tão barato: o produto novo não tem revenda cadastrada, e
    revenda sem revenda vizinha não vale nada para o cliente. Os
@@ -22,17 +22,38 @@
 */
 
 const PLANOS = {
-    mensal: {
-        nome: "Plano Mensal",
-        valor: "R$ 5,00 por mês",
-        resumo: "Sem fidelidade. Cancele quando quiser."
-    },
-
+    // O anual primeiro: é o que aparece em destaque na hora de pagar.
     anual: {
         nome: "Plano Anual",
-        valor: "R$ 50,00 por ano",
+        valor: "R$ 99,00 por ano",
+        preco: 99,
         resumo: "Dois meses de graça em relação ao mensal."
+    },
+
+    mensal: {
+        nome: "Plano Mensal",
+        valor: "R$ 9,90 por mês",
+        preco: 9.9,
+        resumo: "Sem fidelidade. Cancele quando quiser."
     }
+};
+
+
+/*
+   O Pix que recebe as assinaturas, num lugar só.
+
+   A chave pode ficar à vista: é para isso que ela existe. Aleatória, e
+   não CPF nem telefone, para não expor documento de ninguém.
+
+   Enquanto a chave, o recebedor ou o WhatsApp estiverem vazios, a tela
+   de pagamento avisa que o Pix está sendo configurado, em vez de mostrar
+   um QR Code que não paga ninguém.
+*/
+const PIX = {
+    chave: "2e65ca21-3eac-409c-8a65-282eef7897a1",   // a chave aleatória, como o banco mostra
+    recebedor: "Igor Vinicius M Costa",   // o nome do titular da conta, até 25 letras
+    cidade: "Alfenas",
+    whatsapp: "31999347032"               // DDD + número que recebe os comprovantes
 };
 
 // O plano em destaque. O anual é melhor para os dois lados: o dono

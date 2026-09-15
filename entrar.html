@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/busca.css">
     <link rel="stylesheet" href="css/formulario.css">
+    <link rel="stylesheet" href="css/pagamento.css">
 </head>
 
 <body>
@@ -59,11 +60,7 @@
             <!-- Quem se cadastrou e ainda não pagou bate aqui todo dia
                  para ver se abriu. Sem este bloco ele lê "falta o
                  pagamento" e não tem por onde pagar. -->
-            <p id="bloco-pagar" hidden>
-                <a id="link-pagamento" class="botao" href="#" target="_blank" rel="noopener">
-                    Pagar a assinatura
-                </a>
-            </p>
+            <div id="bloco-pagar" hidden></div>
 
             <p class="rodape-form">
                 <a href="#" id="link-esqueci">Esqueci a senha</a>
@@ -93,6 +90,9 @@
     <script src="js/utils.js"></script>
     <script src="js/banco.js"></script>
     <script src="js/auth.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <script src="js/planos.js"></script>
+    <script src="js/pix.js"></script>
 
     <script>
         const recado = document.getElementById("recado");
@@ -146,9 +146,10 @@
 
             avisar(r.mensagem, "erro");
 
-            if (r.linkDePagamento) {
-                document.getElementById("link-pagamento").href = r.linkDePagamento;
-                document.getElementById("bloco-pagar").hidden = false;
+            // Quem ainda não pagou, ou deixou vencer, recebe aqui mesmo o
+            // Pix para pagar e o botão do comprovante.
+            if (r.revenda && (r.aguardandoPagamento || r.suspensa)) {
+                desenharPagamento(document.getElementById("bloco-pagar"), r.revenda);
             }
 
             botao.disabled = false;

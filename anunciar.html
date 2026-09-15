@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/busca.css">
     <link rel="stylesheet" href="css/formulario.css">
+    <link rel="stylesheet" href="css/pagamento.css">
 </head>
 
 <body>
@@ -188,10 +189,15 @@
             <h2>Conta criada</h2>
             <p class="explica" id="resumo-pronto"></p>
 
+            <!-- O Pix logo depois de criar a conta: é o momento em que a
+                 pessoa ainda está com o celular na mão e a decisão tomada. -->
+            <div id="pagar-cadastro" hidden></div>
+
             <p class="explica">
-                Agora entre no painel e preencha o que faz a sua revenda
-                aparecer na busca: o horário de funcionamento, se você entrega
-                ou atende no balcão, até onde entrega, e o preço de cada item.
+                Com a revenda ativa, entre no painel e preencha o que faz a
+                sua revenda aparecer na busca: o horário de funcionamento, se
+                você entrega ou atende no balcão, até onde entrega, e o preço
+                de cada item.
             </p>
 
             <a class="botao" href="entrar.html">Entrar no painel</a>
@@ -209,6 +215,9 @@
     <script src="js/distancia.js"></script>
     <script src="js/onde.js"></script>
     <script src="js/banco.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <script src="js/planos.js"></script>
+    <script src="js/pix.js"></script>
     <script src="js/anunciar.js"></script>
 
 </body>

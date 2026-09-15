@@ -121,7 +121,7 @@ async function situacaoDaConta(idDeAuth) {
 
     const { data: usuario, error } = await banco
         .from("usuarios")
-        .select("id, nome, perfil, ativo, revenda_id, revendas(id, nome, assinatura_status, assinatura_vencimento, assinatura_link)")
+        .select("id, nome, perfil, ativo, revenda_id, revendas(id, nome, cnpj, assinatura_status, assinatura_vencimento, assinatura_link)")
         .eq("auth_id", idDeAuth)
         .maybeSingle();
 
@@ -140,22 +140,25 @@ async function situacaoDaConta(idDeAuth) {
 
     const revenda = usuario.revendas;
 
+    // A revenda vai junto nas duas respostas abaixo: é com o nome, o
+    // CNPJ e o id dela que a tela monta o Pix e a mensagem do comprovante.
+    const paraPagar = { id: revenda.id, nome: revenda.nome, cnpj: revenda.cnpj };
+
     if (revenda.assinatura_status === "aguardando_pagamento") {
         return {
             ok: false,
             aguardandoPagamento: true,
-            // O MESMO link criado no cadastro, e não um novo. Criar outro
-            // abriria uma segunda cobrança, e o dono pagaria duas vezes.
-            linkDePagamento: revenda.assinatura_link || "",
-            mensagem: "A assinatura ainda não foi confirmada. Assim que o pagamento cair, o acesso abre sozinho."
+            revenda: paraPagar,
+            mensagem: "Falta ativar a sua revenda. Pague a assinatura abaixo e mande o comprovante: assim que a gente conferir, o acesso abre."
         };
     }
 
     if (revenda.assinatura_status !== "ativa") {
         return {
             ok: false,
-            linkDePagamento: revenda.assinatura_link || "",
-            mensagem: "O acesso desta revenda está suspenso. Regularize a assinatura para voltar a editar."
+            suspensa: true,
+            revenda: paraPagar,
+            mensagem: "O acesso desta revenda está suspenso. Pague a assinatura abaixo para voltar a aparecer na busca."
         };
     }
 
