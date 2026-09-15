@@ -82,8 +82,30 @@
     border-color: rgba(255, 255, 255, .6);
 }
 
+.acoes-topo {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* O "Entrar" é só texto, sem contorno: quem já é anunciante sabe onde
+   clicar, e o botão com borda fica para quem ainda vai virar um. */
+.link-entrar {
+    padding: 8px 10px;
+    border-radius: 999px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #fff;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: .18s;
+}
+
+.link-entrar:hover { background: rgba(255, 255, 255, .12); }
+
 @media (max-width: 420px) {
     .link-anunciar { padding: 7px 11px; font-size: 12.5px; }
+    .link-entrar { padding: 7px 8px; font-size: 12.5px; }
 }
 
 
