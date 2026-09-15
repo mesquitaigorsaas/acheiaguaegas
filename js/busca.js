@@ -358,11 +358,7 @@ function desenharPedido() {
                     title="Tirar do pedido">
                 ${esc(i.apelido || i.nome)} <span aria-hidden="true">&times;</span>
             </button>
-        `).join("")
-        // Com dois itens ou mais, tirar um por um já é trabalho.
-        + (estado.pedido.length > 1
-            ? `<button type="button" class="limpar-pedido" data-limpar-pedido>Limpar tudo</button>`
-            : "");
+        `).join("");
 
 }
 
@@ -589,15 +585,6 @@ function cartao(r, pedidos, menorTotal) {
 }
 
 
-/** Zera o pedido: desmarca tudo e tira a lista, que respondia a ele. */
-function limparPedido() {
-    estado.pedido = [];
-    abrirTipo(estado.tipo);
-    desenharPedido();
-    document.getElementById("resultados").hidden = true;
-}
-
-
 /**
  * O endereço entra na mensagem na hora do clique, e não quando o cartão
  * foi desenhado. O mapa e a lista aparecem assim que o CEP é achado, e
@@ -645,8 +632,6 @@ function completarZap(link) {
 
         const tirar = evento.target.closest("[data-tirar]");
         if (tirar) { alternarItem(tirar.dataset.tirar); return; }
-
-        if (evento.target.closest("[data-limpar-pedido]")) { limparPedido(); return; }
 
         const zap = evento.target.closest(".botao-zap");
         if (zap) completarZap(zap);

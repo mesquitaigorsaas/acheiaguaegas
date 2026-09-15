@@ -328,18 +328,6 @@
     color: var(--tinta-fraca);
 }
 
-.limpar-pedido {
-    margin-left: auto;
-    padding: 8px 12px;
-    background: none;
-    border: none;
-    font-size: 13.5px;
-    font-weight: 600;
-    color: var(--vermelho);
-    text-decoration: underline;
-    cursor: pointer;
-}
-
 .item-desenho[data-familia="gas"].escolhido {
     background: var(--gas-clara);
     border-color: var(--gas);
