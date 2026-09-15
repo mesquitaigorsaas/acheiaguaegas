@@ -103,14 +103,22 @@
                 </form>
             </div>
 
-            <p class="onde-achado" id="resumo-onde" hidden></p>
-
             <!-- O ponto que a busca vai usar, no mapa. GPS de celular
                  dentro de casa erra de quarteirão, e o endereço escrito
                  pode cair na rua de mesmo nome do outro lado da cidade:
                  ver o pino é o jeito de a pessoa perceber antes de
-                 comparar distâncias medidas do lugar errado. -->
-            <div class="mapa-onde" id="mapa-onde" hidden></div>
+                 comparar distâncias medidas do lugar errado.
+
+                 O bloco muda de lugar: pelo GPS fica logo embaixo do
+                 botão, e o formulário some; pelo endereço fica embaixo
+                 do formulário. -->
+            <div id="lugar-achado">
+                <p class="onde-achado" id="resumo-onde" hidden></p>
+                <div class="mapa-onde" id="mapa-onde" hidden></div>
+                <button type="button" class="botao-vazio botao-digitar" id="botao-digitar" hidden>
+                    Prefiro digitar o endereço
+                </button>
+            </div>
         </section>
 
         <!-- PASSO 2 -->

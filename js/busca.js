@@ -69,6 +69,7 @@ function avisar(texto, tipo) {
 ========================================== */
 
 async function usarGps() {
+    const vez = ++pedidoDeLugar;
     const botao = document.getElementById("botao-gps");
     botao.disabled = true;
     botao.textContent = "Procurando você...";
@@ -76,8 +77,16 @@ async function usarGps() {
 
     try {
         const p = await ondeEstouPeloAparelho();
-        definirOnde({ lat: p.lat, lng: p.lng, escrito: "Sua localização agora", como: "gps" });
+
+        if (vez === pedidoDeLugar) {
+            // Escolheu a localização: o endereço meio digitado não vale
+            // mais, e deixá-lo na tela faria parecer que é ele o usado.
+            limparEndereco();
+            definirOnde({ lat: p.lat, lng: p.lng, escrito: "Sua localização agora", como: "gps" });
+        }
     } catch (erro) {
+        // Sem permissão ou sem sinal: o endereço digitado continua lá,
+        // que é justamente a outra saída.
         avisar(erro.message, "erro");
     }
 
@@ -124,6 +133,38 @@ function cepNoCampo(texto) {
 let cepDaRua = null;
 let cepProcurado = null;
 
+/*
+   Cada pedido de lugar — GPS, CEP ou endereço — ganha um número, e só a
+   resposta do último vale. Sem isso, o CEP que ainda estava a caminho
+   quando a pessoa tocou no GPS chegava depois e passava por cima dele.
+*/
+let pedidoDeLugar = 0;
+
+function limparEndereco() {
+    CAMPOS.forEach((id) => { document.getElementById(id).value = ""; });
+    cepDaRua = null;
+    cepProcurado = null;
+}
+
+/** Pelo GPS o mapa sobe para baixo do botão e o formulário some. */
+function arrumarPassoOnde(como) {
+    const porGps = como === "gps";
+    const bloco = document.getElementById("lugar-achado");
+    const form = document.getElementById("form-endereco");
+
+    document.querySelector("#passo-onde .ou").hidden = porGps;
+    form.hidden = porGps;
+    document.getElementById("botao-digitar").hidden = !porGps;
+
+    const antes = porGps ? document.getElementById("botao-gps") : form;
+    if (antes.nextElementSibling !== bloco) antes.after(bloco);
+}
+
+function voltarAoEndereco() {
+    arrumarPassoOnde("endereco");
+    document.getElementById("rua").focus();
+}
+
 async function aoDigitarRua() {
     const campoRua = document.getElementById("rua");
     const cep = cepNoCampo(campoRua.value);
@@ -133,12 +174,14 @@ async function aoDigitarRua() {
     if (cep === cepProcurado) return;
     cepProcurado = cep;
 
+    const vez = pedidoDeLugar;
     campoRua.classList.add("buscando");
     const achado = await enderecoDoCep(cep);
     campoRua.classList.remove("buscando");
 
-    // A pessoa continuou digitando enquanto o CEP ia e voltava.
-    if (cepNoCampo(campoRua.value) !== cep) return;
+    // A pessoa tocou no GPS, ou continuou digitando, enquanto o CEP ia
+    // e voltava.
+    if (vez !== pedidoDeLugar || cepNoCampo(campoRua.value) !== cep) return;
 
     if (!achado) {
         cepProcurado = null;
@@ -174,6 +217,7 @@ async function usarEndereco(evento) {
         return;
     }
 
+    const vez = ++pedidoDeLugar;
     const botao = document.querySelector("#form-endereco button[type=submit]");
     botao.disabled = true;
     botao.textContent = "Procurando...";
@@ -189,6 +233,9 @@ async function usarEndereco(evento) {
 
     botao.disabled = false;
     botao.textContent = "Achar este endereço";
+
+    // Enquanto o mapa procurava, a pessoa tocou em "usar a minha localização".
+    if (vez !== pedidoDeLugar) return;
 
     if (!achado) {
         avisar("Não achei esse endereço. Confira a rua e a cidade, ou use o botão de localização.", "erro");
@@ -219,6 +266,7 @@ function definirOnde(onde) {
     resumo.innerHTML = "Buscando perto de<small>" + esc(onde.escrito) + "</small>";
     resumo.hidden = false;
 
+    arrumarPassoOnde(onde.como);
     desenharMapa(onde);
     document.getElementById("passo-oque").hidden = false;
 
@@ -612,6 +660,7 @@ function completarZap(link) {
     document.getElementById("botao-gps").addEventListener("click", usarGps);
     document.getElementById("form-endereco").addEventListener("submit", usarEndereco);
     document.getElementById("rua").addEventListener("input", aoDigitarRua);
+    document.getElementById("botao-digitar").addEventListener("click", voltarAoEndereco);
     document.getElementById("so-abertas").addEventListener("change", (evento) => {
         estado.soAbertas = evento.target.checked;
         desenharLista();
