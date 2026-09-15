@@ -39,8 +39,17 @@ let abaAtual = "precos";
 const ABAS = [
     { id: "precos",   nome: "Preços" },
     { id: "horarios", nome: "Horários" },
-    { id: "entrega",  nome: "Entrega" },
+    { id: "entrega",  nome: "Entrega e pagamento" },
     { id: "revenda",  nome: "A revenda" }
+];
+
+// As formas de pagamento que o banco conhece, na ordem da tela. As
+// chaves são as mesmas da coluna revendas.pagamentos.
+const FORMAS_DE_PAGAMENTO = [
+    { id: "pix",      nome: "Pix" },
+    { id: "debito",   nome: "Cartão de débito" },
+    { id: "credito",  nome: "Cartão de crédito" },
+    { id: "dinheiro", nome: "Dinheiro" }
 ];
 
 // Domingo é 0, como no JavaScript e como no banco.
@@ -511,6 +520,31 @@ function telaEntrega() {
                 </p>
             </div>
 
+            <div class="campo" id="campo-taxa">
+                <label for="taxa">Taxa de entrega (R$)</label>
+                <input type="text" id="taxa" inputmode="decimal" placeholder="0,00"
+                       value="${Number(revenda.taxa_entrega) > 0 ? esc(Number(revenda.taxa_entrega).toFixed(2).replace(".", ",")) : ""}">
+                <p class="dica">
+                    Em branco, o cliente vê "Entrega grátis". Com valor, ele
+                    já vê a taxa somada no total antes de chamar você — e
+                    não desiste no meio da conversa.
+                </p>
+            </div>
+
+            <h3 class="titulo-tipo">Formas de pagamento que você aceita</h3>
+            <p class="explica">
+                Marque só o que aceita. Quem escolher uma forma que você
+                não aceita vê o aviso no seu cartão antes de pedir.
+            </p>
+
+            ${FORMAS_DE_PAGAMENTO.map((f) => `
+                <label class="marcar">
+                    <input type="checkbox" data-forma="${esc(f.id)}"
+                           ${(revenda.pagamentos || []).includes(f.id) ? "checked" : ""}>
+                    <span><strong>${esc(f.nome)}</strong></span>
+                </label>
+            `).join("")}
+
             <div class="barra-salvar">
                 <button type="button" class="botao" data-salvar="entrega">Salvar</button>
             </div>
@@ -524,12 +558,30 @@ async function salvarEntrega() {
     const retirada = document.getElementById("faz-retirada").checked;
     const raio = Number(document.getElementById("raio").value);
 
+    // "5", "5,00" e "5.00" viram 5. Em branco é entrega grátis.
+    const taxaTexto = document.getElementById("taxa").value.replace(/[^\d,.]/g, "");
+    const taxa = !taxaTexto ? 0 : Number(taxaTexto.includes(",")
+        ? taxaTexto.replace(/\./g, "").replace(",", ".")
+        : taxaTexto);
+
+    const pagamentos = [...document.querySelectorAll("[data-forma]")]
+        .filter((c) => c.checked)
+        .map((c) => c.dataset.forma);
+
     if (!entrega && !retirada) {
         avisar("Marque pelo menos uma: ou você entrega, ou o cliente busca. Sem nenhuma das duas, ninguém consegue comprar.", "erro");
         return;
     }
     if (entrega && (!Number.isFinite(raio) || raio <= 0 || raio > 60)) {
         avisar("O raio de entrega precisa ser um número entre 1 e 60 quilômetros.", "erro");
+        return;
+    }
+    if (entrega && (!Number.isFinite(taxa) || taxa < 0 || taxa > 500)) {
+        avisar("A taxa de entrega precisa ser um valor em reais, como 5,00. Deixe em branco se a entrega é grátis.", "erro");
+        return;
+    }
+    if (!pagamentos.length) {
+        avisar("Marque pelo menos uma forma de pagamento. Sem nenhuma, o cliente não tem como pagar você.", "erro");
         return;
     }
 
@@ -540,7 +592,9 @@ async function salvarEntrega() {
     const { error } = await conectar().from("revendas").update({
         faz_entrega: entrega,
         faz_retirada: retirada,
-        raio_entrega_km: entrega ? raio : revenda.raio_entrega_km
+        raio_entrega_km: entrega ? raio : revenda.raio_entrega_km,
+        taxa_entrega: entrega ? taxa : revenda.taxa_entrega,
+        pagamentos
     }).eq("id", revenda.id);
 
     if (error) {
@@ -553,7 +607,11 @@ async function salvarEntrega() {
 
     revenda.faz_entrega = entrega;
     revenda.faz_retirada = retirada;
-    if (entrega) revenda.raio_entrega_km = raio;
+    if (entrega) {
+        revenda.raio_entrega_km = raio;
+        revenda.taxa_entrega = taxa;
+    }
+    revenda.pagamentos = pagamentos;
 
     avisar("Salvo.");
     botao.disabled = false;

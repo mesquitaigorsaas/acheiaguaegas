@@ -78,6 +78,30 @@
                     </button>
                 </div>
 
+                <!-- Como vai pagar. Fica aqui, com o pedido, e não na
+                     conversa: cartão recusado na porta é o entregador
+                     voltando com o botijão. -->
+                <div class="pagamentos" id="pagamentos">
+                    <p class="rotulo-pagamento">Como vai pagar?</p>
+
+                    <div class="formas-pagamento" role="group" aria-label="Forma de pagamento">
+                        <button type="button" class="modo" data-pagamento="pix">Pix</button>
+                        <button type="button" class="modo" data-pagamento="debito">Cartão de débito</button>
+                        <button type="button" class="modo" data-pagamento="credito">Cartão de crédito</button>
+                        <button type="button" class="modo" data-pagamento="dinheiro">Dinheiro</button>
+                    </div>
+
+                    <div class="campo campo-troco" id="campo-troco" hidden>
+                        <label for="troco">Troco para</label>
+                        <input type="text" id="troco" inputmode="decimal" placeholder="Ex: 100,00">
+                        <p class="dica">Deixe em branco se não precisar de troco.</p>
+                    </div>
+
+                    <p class="aviso-pagamento" id="aviso-pagamento" role="alert" hidden>
+                        Escolha como vai pagar. A revenda precisa saber antes de sair com o pedido.
+                    </p>
+                </div>
+
             </div>
 
         </section>

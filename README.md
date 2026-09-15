@@ -74,6 +74,9 @@ No SQL Editor, nesta ordem:
    ```sql
    delete from revendas where cnpj like 99%;
    ```
+5. `supabase/002-logos.sql`, `supabase/003-horarios-por-dia.sql` e
+   `supabase/004-taxa-e-pagamento.sql`, nesta ordem — logos, horário por
+   dia e por tipo, e taxa de entrega com formas de pagamento
 
 Depois, a função de cadastro:
 

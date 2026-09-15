@@ -42,6 +42,8 @@ const estado = {
     pedido: [],       // os itens marcados, na ordem em que foram marcados
     modo: "entrega",  // "entrega" ou "retirada"
     ordem: "distancia", // "distancia" ou "preco"
+    quantidades: {},  // quantos de cada item marcado: { id: 2 }
+    pagamento: null,  // "pix", "debito", "credito" ou "dinheiro"
     // Vem DESMARCADO: a lista mostra todo mundo, e o horário é
     // informação, não corte. Quem quiser ver só quem atende agora
     // marca a caixa.
@@ -49,6 +51,15 @@ const estado = {
 };
 
 let catalogo = [];
+
+// As formas de pagamento, com o nome inteiro (mensagem) e o curto (selo).
+// As chaves são as mesmas da coluna revendas.pagamentos.
+const PAGAMENTOS = {
+    pix:      { nome: "Pix",               curto: "Pix" },
+    debito:   { nome: "Cartão de débito",  curto: "débito" },
+    credito:  { nome: "Cartão de crédito", curto: "crédito" },
+    dinheiro: { nome: "Dinheiro",          curto: "dinheiro" }
+};
 
 
 /* ==========================================
@@ -302,8 +313,10 @@ function alternarItem(id) {
 
     if (noPedido(id)) {
         estado.pedido = estado.pedido.filter((i) => i.id !== id);
+        delete estado.quantidades[id];
     } else {
         estado.pedido.push(item);
+        estado.quantidades[id] = 1;
     }
 
     abrirTipo(estado.tipo);
@@ -318,6 +331,26 @@ function alternarItem(id) {
     }
 
     procurarLogo();
+}
+
+
+/**
+ * Mais um ou menos um. Abaixo de um não desce: tirar do pedido é o ×.
+ *
+ * Não vai ao banco. O preço de cada item já veio na busca, e o total
+ * com a quantidade é refeito aqui.
+ */
+function mudarQuantidade(id, passo) {
+    if (!noPedido(id)) return;
+
+    const atual = estado.quantidades[id] || 1;
+    const nova = Math.min(20, Math.max(1, atual + passo));
+    if (nova === atual) return;
+
+    estado.quantidades[id] = nova;
+    desenharPedido();
+
+    if (!document.getElementById("resultados").hidden) desenharLista();
 }
 
 
@@ -351,12 +384,21 @@ function desenharPedido() {
     caixa.hidden = false;
 
     caixa.innerHTML = "<span class='rotulo-pedido'>Seu pedido</span>"
-        + estado.pedido.map((i) => `
-            <button type="button" class="ficha" data-tirar="${esc(i.id)}"
-                    title="Tirar do pedido">
-                ${esc(i.apelido || i.nome)} <span aria-hidden="true">&times;</span>
-            </button>
-        `).join("");
+        + estado.pedido.map((i) => {
+            const qtd = estado.quantidades[i.id] || 1;
+            const nome = esc(i.apelido || i.nome);
+
+            return `
+                <div class="ficha">
+                    <button type="button" data-menos="${esc(i.id)}"
+                            aria-label="Um ${nome} a menos" ${qtd <= 1 ? "disabled" : ""}>&minus;</button>
+                    <span class="ficha-nome">${qtd} ${nome}</span>
+                    <button type="button" data-mais="${esc(i.id)}"
+                            aria-label="Mais um ${nome}">+</button>
+                    <button type="button" class="ficha-tirar" data-tirar="${esc(i.id)}"
+                            title="Tirar do pedido" aria-label="Tirar ${nome} do pedido">&times;</button>
+                </div>`;
+        }).join("");
 
 }
 
@@ -381,6 +423,55 @@ function escolherModo(modo) {
         modo === "retirada" ? "Onde você está" : "Local da entrega";
 
     if (estado.onde && estado.pedido.length) procurar();
+}
+
+
+/* ==========================================
+   COMO VAI PAGAR
+========================================== */
+
+/**
+ * A forma de pagamento. Vai na mensagem, e acende no cartão da revenda
+ * que não a aceita — cartão recusado na porta é o entregador voltando
+ * com o botijão.
+ */
+function escolherPagamento(forma) {
+    estado.pagamento = forma;
+
+    document.querySelectorAll("[data-pagamento]").forEach((b) => {
+        b.classList.toggle("escolhido", b.dataset.pagamento === forma);
+    });
+
+    // Troco só existe no dinheiro.
+    document.getElementById("campo-troco").hidden = forma !== "dinheiro";
+    document.getElementById("aviso-pagamento").hidden = true;
+
+    if (!document.getElementById("resultados").hidden) desenharLista();
+}
+
+/** Sem forma escolhida ainda, ninguém é marcado como "não aceita". */
+function aceitaPagamento(r) {
+    return !estado.pagamento || !Array.isArray(r.pagamentos) || r.pagamentos.includes(estado.pagamento);
+}
+
+/** A taxa só vale na entrega. Quem busca no balcão não paga frete. */
+function taxaDe(r) {
+    return estado.modo === "entrega" ? Number(r.taxa_entrega) || 0 : 0;
+}
+
+/**
+ * O total que a pessoa paga NESTA revenda: o preço de cada item vezes a
+ * quantidade, mais a taxa quando é entrega. É este, e não o total do
+ * banco — que soma um de cada, sem frete —, que ordena por preço e
+ * decide a mais barata.
+ */
+function totalDe(r) {
+    const itens = estado.pedido.reduce((soma, i) => {
+        const p = r.precos ? r.precos[i.id] : undefined;
+        return p === undefined ? soma : soma + Number(p) * (estado.quantidades[i.id] || 1);
+    }, 0);
+
+    return Math.round((itens + taxaDe(r)) * 100) / 100;
 }
 
 
@@ -475,9 +566,11 @@ function desenharLista() {
     // pedido INTEIRO. Apontar a mais barata de todas quando ela está
     // fechada manda a pessoa para um telefone que ninguém atende; e
     // apontar quem só tem metade compara preços de coisas diferentes.
-    const completasAbertas = achados.filter((r) => r.aberta && r.itens_encontrados === pedidos);
+    // E que aceitam o pagamento escolhido: a mais barata que recusa o
+    // cartão da pessoa não é opção para ela.
+    const completasAbertas = achados.filter((r) => r.aberta && r.itens_encontrados === pedidos && aceitaPagamento(r));
     const menorTotal = completasAbertas.length
-        ? Math.min(...completasAbertas.map((r) => Number(r.total)))
+        ? Math.min(...completasAbertas.map(totalDe))
         : null;
 
     lista.innerHTML = ordenar(achados, pedidos)
@@ -508,7 +601,7 @@ function ordenar(achados, pedidos) {
         if (aCompleta !== bCompleta) return aCompleta ? -1 : 1;
         if (!aCompleta) return 0;
 
-        return Number(a.total) - Number(b.total);
+        return totalDe(a) - totalDe(b);
     });
 }
 
@@ -526,32 +619,40 @@ function escolherOrdem(ordem) {
 
 function cartao(r, pedidos, menorTotal) {
     const completa = r.itens_encontrados === pedidos;
-    const maisBarata = completa && r.aberta && Number(r.total) === menorTotal;
+    const aceita = aceitaPagamento(r);
+    const total = totalDe(r);
+    const taxa = taxaDe(r);
+    const maisBarata = completa && r.aberta && aceita && total === menorTotal;
+
+    const qtdDe = (i) => estado.quantidades[i.id] || 1;
+    const umSo = pedidos === 1 && qtdDe(estado.pedido[0]) === 1;
 
     const zap = numeroDeZap(r.whatsapp);
 
-    // Os itens que ELA tem, e não os que a pessoa pediu: mandar no
-    // WhatsApp um item que a revenda não vende começa a conversa com
-    // uma recusa.
-    const temEstes = estado.pedido.filter((i) => r.precos && r.precos[i.id] !== undefined);
-    // O endereço entra só na hora do clique, em completarZap().
-    const texto = "Olá! Vi no Achei Água & Gás. Você entrega "
-        + temEstes.map((i) => i.nome).join(" e ") + " aqui?";
 
     const logo = r.logo_url
         ? `<img class="logo" src="${esc(r.logo_url)}" alt="" loading="lazy">`
         // Sem logo, a lojinha do CSS: a mesma de quando a revenda se cadastra.
         : `<div class="logo logo-vazia" aria-hidden="true"></div>`;
 
-    // Com um item só, o detalhamento repetiria o total logo ao lado.
-    const detalhe = pedidos > 1
+    // Com um item só, um de cada e sem taxa, o detalhamento repetiria o
+    // total logo ao lado. Com quantidade ou com taxa, ele mostra de onde
+    // veio a soma.
+    const detalhe = !umSo || taxa > 0
         ? `<ul class="detalhe-itens">` + estado.pedido.map((i) => {
             const p = r.precos ? r.precos[i.id] : undefined;
+            const nome = (qtdDe(i) > 1 ? qtdDe(i) + "× " : "") + (i.apelido || i.nome);
             return p === undefined
-                ? `<li class="falta">${esc(i.apelido || i.nome)}<span>não vende</span></li>`
-                : `<li>${esc(i.apelido || i.nome)}<span>${esc(dinheiro(p))}</span></li>`;
-          }).join("") + `</ul>`
+                ? `<li class="falta">${esc(nome)}<span>não vende</span></li>`
+                : `<li>${esc(nome)}<span>${esc(dinheiro(Number(p) * qtdDe(i)))}</span></li>`;
+          }).join("")
+          + (taxa > 0 ? `<li>Taxa de entrega<span>${esc(dinheiro(taxa))}</span></li>` : "")
+          + `</ul>`
         : "";
+
+    const rotuloPreco = taxa > 0
+        ? "total com entrega"
+        : (umSo ? (estado.pedido[0].apelido || estado.pedido[0].nome) : "total");
 
     return `
         <article class="revenda${maisBarata ? " melhor" : ""}${r.aberta ? "" : " fechada"}">
@@ -565,13 +666,19 @@ function cartao(r, pedidos, menorTotal) {
                     ${completa ? "" : `<span class="selo incompleta">Tem ${r.itens_encontrados} de ${pedidos}</span>`}
                     ${r.faz_entrega === false ? '<span class="selo so-balcao">Só no balcão</span>' : ""}
                     ${r.faz_retirada === false ? '<span class="selo so-entrega">Só entrega</span>' : ""}
+                    ${estado.modo === "entrega"
+                        ? (taxa > 0
+                            ? `<span class="selo taxa">Entrega ${esc(dinheiro(taxa))}</span>`
+                            : '<span class="selo entrega-gratis">Entrega grátis</span>')
+                        : ""}
+                    ${aceita ? "" : `<span class="selo nao-aceita">Não aceita ${esc(PAGAMENTOS[estado.pagamento].curto)}</span>`}
                     <span>${esc(kmEscrito(r.distancia_km) || "")}</span>
                 </div>
             </div>
 
             <div class="preco">
-                ${esc(dinheiro(r.total))}
-                <small>${pedidos > 1 ? "total" : esc(estado.pedido[0].apelido || estado.pedido[0].nome)}</small>
+                ${esc(dinheiro(total))}
+                <small>${esc(rotuloPreco)}</small>
             </div>
 
             ${detalhe}
@@ -583,8 +690,8 @@ function cartao(r, pedidos, menorTotal) {
                 : ""}
 
             <div class="acao-revenda">
-                <a class="botao botao-zap" href="https://wa.me/${esc(zap)}?text=${encodeURIComponent(texto)}"
-                   data-zap="${esc(zap)}" data-texto="${esc(texto)}"
+                <a class="botao botao-zap" href="https://wa.me/${esc(zap)}"
+                   data-zap="${esc(zap)}" data-revenda="${esc(r.revenda_id)}"
                    target="_blank" rel="noopener">
                     Pedir no WhatsApp
                 </a>
@@ -595,20 +702,95 @@ function cartao(r, pedidos, menorTotal) {
 
 
 /**
- * O endereço entra na mensagem na hora do clique, e não quando o cartão
- * foi desenhado. O mapa e a lista aparecem assim que o CEP é achado, e
- * o número e o complemento costumam ser digitados depois disso.
+ * A mensagem é montada na hora do clique, e não quando o cartão foi
+ * desenhado: o número, o complemento e o troco costumam ser digitados
+ * depois de a lista aparecer.
+ *
+ * Sem forma de pagamento, o clique não sai. Responder uma pergunta
+ * antes é melhor do que descobrir na porta que a revenda não aceita.
  */
-function completarZap(link) {
-    let texto = link.dataset.texto;
-    const campos = lerCampos();
+function completarZap(evento, link) {
+    const r = achadosDaVez.find((x) => x.revenda_id === link.dataset.revenda);
 
-    // Na retirada, o endereço não interessa ao balcão.
-    if (estado.modo === "entrega" && estado.onde && estado.onde.como === "endereco" && campos.rua) {
-        texto += "\nEndereço: " + enderecoEscrito(campos);
+    if (!estado.pagamento) {
+        segurarNoPagamento(evento, "Escolha como vai pagar. A revenda precisa saber antes de sair com o pedido.");
+        return;
     }
 
-    link.href = "https://wa.me/" + link.dataset.zap + "?text=" + encodeURIComponent(texto);
+    // Troco para menos que o total é número trocado, e o entregador só
+    // descobre na porta, sem dinheiro para voltar.
+    const troco = lerTroco();
+    if (r && estado.pagamento === "dinheiro" && troco && troco < totalDe(r)) {
+        segurarNoPagamento(evento, "O troco precisa ser para mais que o total desta revenda, "
+            + dinheiro(totalDe(r)) + ". Confira o valor ou deixe em branco.");
+        return;
+    }
+
+    if (r) link.href = "https://wa.me/" + link.dataset.zap + "?text=" + encodeURIComponent(mensagemDoPedido(r));
+}
+
+/** Não abre o WhatsApp, e leva a pessoa até o que falta responder. */
+function segurarNoPagamento(evento, texto) {
+    evento.preventDefault();
+
+    const aviso = document.getElementById("aviso-pagamento");
+    aviso.textContent = texto;
+    aviso.hidden = false;
+
+    document.getElementById("pagamentos").scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+
+/*
+   Formatada para o WhatsApp: *negrito* nos títulos, e "* " no começo da
+   linha vira lista. É o que o balcão lê de relance, com o telefone numa
+   mão e outro cliente na frente.
+*/
+function mensagemDoPedido(r) {
+    // Os itens que ELA tem, e não os que a pessoa pediu: mandar no
+    // WhatsApp um item que a revenda não vende começa a conversa com
+    // uma recusa.
+    const temEstes = estado.pedido.filter((i) => r.precos && r.precos[i.id] !== undefined);
+    const campos = lerCampos();
+    const entrega = estado.modo === "entrega";
+    const taxa = taxaDe(r);
+
+    const linhas = [
+        "Olá! Vi no Achei Água & Gás.",
+        "*Preciso de:*",
+        "",
+        ...temEstes.map((i) => "* " + (estado.quantidades[i.id] || 1) + " " + i.nome),
+        ""
+    ];
+
+    linhas.push(entrega
+        ? "*Entrega:* " + (taxa > 0 ? dinheiro(taxa) : "grátis")
+        : "*Retirada:* vou buscar no balcão");
+
+    linhas.push("*Total:* " + dinheiro(totalDe(r)));
+
+    let pagamento = PAGAMENTOS[estado.pagamento].nome;
+    const troco = lerTroco();
+    if (estado.pagamento === "dinheiro" && troco) pagamento += " — troco para " + dinheiro(troco);
+    linhas.push("*Pagamento:* " + pagamento);
+
+    // Na retirada, o endereço não interessa ao balcão.
+    if (entrega && estado.onde && estado.onde.como === "endereco" && campos.rua) {
+        linhas.push("*Endereço:* " + enderecoEscrito(campos));
+    }
+
+    return linhas.join("\n");
+}
+
+
+/** "100", "100,00", "R$ 100,00" e "100.00" viram 100. Vazio ou torto, null. */
+function lerTroco() {
+    const t = document.getElementById("troco").value.replace(/[^\d,.]/g, "");
+    if (!t) return null;
+
+    // Com vírgula, o ponto é de milhar; sem vírgula, o ponto é o decimal.
+    const n = Number(t.includes(",") ? t.replace(/\./g, "").replace(",", ".") : t);
+    return Number.isFinite(n) && n > 0 ? n : null;
 }
 
 
@@ -643,6 +825,15 @@ function completarZap(link) {
         const ordem = evento.target.closest("[data-ordem]");
         if (ordem) { escolherOrdem(ordem.dataset.ordem); return; }
 
+        const pagamento = evento.target.closest("[data-pagamento]");
+        if (pagamento) { escolherPagamento(pagamento.dataset.pagamento); return; }
+
+        const menos = evento.target.closest("[data-menos]");
+        if (menos) { mudarQuantidade(menos.dataset.menos, -1); return; }
+
+        const mais = evento.target.closest("[data-mais]");
+        if (mais) { mudarQuantidade(mais.dataset.mais, 1); return; }
+
         const item = evento.target.closest("[data-item]");
         if (item) { alternarItem(item.dataset.item); return; }
 
@@ -650,7 +841,7 @@ function completarZap(link) {
         if (tirar) { alternarItem(tirar.dataset.tirar); return; }
 
         const zap = evento.target.closest(".botao-zap");
-        if (zap) completarZap(zap);
+        if (zap) completarZap(evento, zap);
     });
 
     try {
