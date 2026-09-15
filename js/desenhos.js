@@ -29,9 +29,10 @@ const DESENHOS = {
     "P2":  { forma: "botijao", largura: 30, altura: 34, rotulo: "P2",  popular: "Camping e fogareiro", medida: "2 kg" },
 
     // ÁGUA
-    "20L":         { forma: "galao",     largura: 50, altura: 80, rotulo: "20L",   popular: "Galão de bebedouro", medida: "20 litros" },
-    "10L":         { forma: "galaoAlca", largura: 44, altura: 58, rotulo: "10L",   popular: "Galão médio", medida: "10 litros" },
-    "5L":          { forma: "galaoAlca", largura: 36, altura: 46, rotulo: "5L",    popular: "Galão pequeno", medida: "5 litros" },
+    // "Galão de água", sempre inteiro: "galão" sozinho não diz do quê.
+    "Galão de água 20L": { forma: "galao",     largura: 50, altura: 80, rotulo: "20L", popular: "Galão de água", medida: "20 litros" },
+    "Galão de água 10L": { forma: "galaoAlca", largura: 44, altura: 58, rotulo: "10L", popular: "Galão de água", medida: "10 litros" },
+    "Galão de água 5L":  { forma: "galaoAlca", largura: 36, altura: 46, rotulo: "5L",  popular: "Galão de água", medida: "5 litros" },
     "Fardo 1,5L":  { forma: "fardo", garrafas: 3, largura: 16, altura: 60, rotulo: "1,5L",  popular: "Fardo de garrafas", medida: "6 × 1,5 litro" },
     "Fardo 500ml": { forma: "fardo", garrafas: 4, largura: 12, altura: 42, rotulo: "500ml", popular: "Fardo de garrafinhas", medida: "12 × 500 ml" }
 };

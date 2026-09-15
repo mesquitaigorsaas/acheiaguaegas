@@ -45,9 +45,9 @@ begin
   insert into precos (revenda_id, item_id, preco)
   select v_id, id, 89.00 from itens where tipo = 'gas' and apelido = 'P8';
   insert into precos (revenda_id, item_id, preco)
-  select v_id, id, 14.00 from itens where tipo = 'agua' and apelido = '20L';
+  select v_id, id, 14.00 from itens where tipo = 'agua' and apelido = 'Galão de água 20L';
   insert into precos (revenda_id, item_id, preco)
-  select v_id, id, 9.00 from itens where tipo = 'agua' and apelido = '10L';
+  select v_id, id, 9.00 from itens where tipo = 'agua' and apelido = 'Galão de água 10L';
 end $$;
 
 -- Água e Gás do Zé
@@ -73,9 +73,9 @@ begin
   insert into precos (revenda_id, item_id, preco)
   select v_id, id, 85.00 from itens where tipo = 'gas' and apelido = 'P8';
   insert into precos (revenda_id, item_id, preco)
-  select v_id, id, 12.50 from itens where tipo = 'agua' and apelido = '20L';
+  select v_id, id, 12.50 from itens where tipo = 'agua' and apelido = 'Galão de água 20L';
   insert into precos (revenda_id, item_id, preco)
-  select v_id, id, 8.50 from itens where tipo = 'agua' and apelido = '10L';
+  select v_id, id, 8.50 from itens where tipo = 'agua' and apelido = 'Galão de água 10L';
   insert into precos (revenda_id, item_id, preco)
   select v_id, id, 21.90 from itens where tipo = 'agua' and apelido = 'Fardo 1,5L';
 end $$;
@@ -107,7 +107,7 @@ begin
   insert into precos (revenda_id, item_id, preco)
   select v_id, id, 62.00 from itens where tipo = 'gas' and apelido = 'P5';
   insert into precos (revenda_id, item_id, preco)
-  select v_id, id, 13.00 from itens where tipo = 'agua' and apelido = '20L';
+  select v_id, id, 13.00 from itens where tipo = 'agua' and apelido = 'Galão de água 20L';
 end $$;
 
 -- Disk Gás 24 Horas
@@ -133,7 +133,7 @@ begin
   insert into precos (revenda_id, item_id, preco)
   select v_id, id, 95.00 from itens where tipo = 'gas' and apelido = 'P8';
   insert into precos (revenda_id, item_id, preco)
-  select v_id, id, 16.00 from itens where tipo = 'agua' and apelido = '20L';
+  select v_id, id, 16.00 from itens where tipo = 'agua' and apelido = 'Galão de água 20L';
 end $$;
 
 -- Água Pura Distribuidora
@@ -155,9 +155,9 @@ begin
   values (v_id, 'Segunda a sábado', array[1,2,3,4,5,6]::smallint[], '07:30', '18:30', 10);
 
   insert into precos (revenda_id, item_id, preco)
-  select v_id, id, 11.90 from itens where tipo = 'agua' and apelido = '20L';
+  select v_id, id, 11.90 from itens where tipo = 'agua' and apelido = 'Galão de água 20L';
   insert into precos (revenda_id, item_id, preco)
-  select v_id, id, 8.00 from itens where tipo = 'agua' and apelido = '10L';
+  select v_id, id, 8.00 from itens where tipo = 'agua' and apelido = 'Galão de água 10L';
   insert into precos (revenda_id, item_id, preco)
   select v_id, id, 19.90 from itens where tipo = 'agua' and apelido = 'Fardo 1,5L';
 end $$;
@@ -183,6 +183,6 @@ begin
   insert into precos (revenda_id, item_id, preco)
   select v_id, id, 92.00 from itens where tipo = 'gas' and apelido = 'P13';
   insert into precos (revenda_id, item_id, preco)
-  select v_id, id, 10.90 from itens where tipo = 'agua' and apelido = '20L';
+  select v_id, id, 10.90 from itens where tipo = 'agua' and apelido = 'Galão de água 20L';
 end $$;
 

@@ -26,9 +26,10 @@ insert into itens (tipo, nome, apelido, ordem) values
   ('gas',  'Botijão P2 — 2 kg',          'P2',   50),
 
   -- ÁGUA -----------------------------------------------------
-  ('agua', 'Galão 20 litros',            '20L',  10),
-  ('agua', 'Galão 10 litros',            '10L',  20),
-  ('agua', 'Garrafão 5 litros',          '5L',   30),
+  -- "Galão de água", sempre inteiro: "galão" sozinho não diz do quê.
+  ('agua', 'Galão de água 20 litros',    'Galão de água 20L', 10),
+  ('agua', 'Galão de água 10 litros',    'Galão de água 10L', 20),
+  ('agua', 'Galão de água 5 litros',     'Galão de água 5L',  30),
   ('agua', 'Fardo 1,5 litro — 6 unidades', 'Fardo 1,5L', 40),
   ('agua', 'Fardo 500 ml — 12 unidades',   'Fardo 500ml', 50)
 on conflict (tipo, nome) do nothing;

@@ -32,15 +32,15 @@
         {
             "id": "agua-20",
             "tipo": "agua",
-            "nome": "Galão 20 litros",
-            "apelido": "20L",
+            "nome": "Galão de água 20 litros",
+            "apelido": "Galão de água 20L",
             "ordem": 10
         },
         {
             "id": "agua-10",
             "tipo": "agua",
-            "nome": "Galão 10 litros",
-            "apelido": "10L",
+            "nome": "Galão de água 10 litros",
+            "apelido": "Galão de água 10L",
             "ordem": 20
         },
         {

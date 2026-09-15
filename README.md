@@ -146,7 +146,7 @@ anunciar.html           o cadastro da revenda
 js/busca.js             os três passos da busca
 js/anunciar.js          o cadastro, com CNPJ e endereço conferidos
 js/banco.js             de onde vêm os dados, e o modo demonstração
-js/desenhos.js          o desenho de cada botijão e galão, com o nome dentro
+js/desenhos.js          o desenho de cada botijão e galão de água, com o nome dentro
 js/onde.js              GPS, CEP e nome de rua viram coordenada
 js/distancia.js         a conta da distância e como ela é escrita
 js/cnpj.js              o dígito verificador
