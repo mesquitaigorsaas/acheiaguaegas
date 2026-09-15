@@ -188,9 +188,11 @@
     color: var(--tinta-fraca);
 }
 
-/* O formulário e o "ou digite" somem pelo atributo hidden, e o display
-   deles, definido acima, ganharia do atributo sem esta linha. */
-#passo-onde [hidden] { display: none !important; }
+/* Tudo que some nesta tela some pelo atributo hidden, e o display de
+   cada caixa, definido nas regras dela, ganharia do atributo sem esta
+   linha. Foi assim que o "seu pedido" continuava na tela com o último
+   item depois de a pessoa tirá-lo no x. */
+[hidden] { display: none !important; }
 
 .botao-digitar { margin-top: 12px; }
 

@@ -395,6 +395,9 @@ function desenharPedido() {
     const caixa = document.getElementById("meu-pedido");
 
     if (!estado.pedido.length) {
+        // Esvazia além de esconder: a ficha do último item não pode
+        // continuar lá dentro esperando a caixa reaparecer.
+        caixa.innerHTML = "";
         caixa.hidden = true;
         return;
     }
