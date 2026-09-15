@@ -195,13 +195,33 @@ function abrirTipo(tipo) {
         b.classList.toggle("escolhido", b.dataset.tipo === tipo);
     });
 
-    document.getElementById("itens").innerHTML = catalogo
+    const itens = document.getElementById("itens");
+    itens.classList.add("itens-desenho");
+
+    itens.innerHTML = catalogo
         .filter((i) => i.tipo === tipo)
-        .map((i) => `
-            <button type="button" class="item-botao${noPedido(i.id) ? " escolhido" : ""}" data-item="${esc(i.id)}">
-                ${esc(i.apelido || i.nome)}
-            </button>
-        `).join("");
+        .map((i) => {
+            const escolhido = noPedido(i.id) ? " escolhido" : "";
+            const desenho = desenhoDoItem(i);
+
+            if (!desenho) {
+                return `
+                    <button type="button" class="item-botao${escolhido}" data-item="${esc(i.id)}">
+                        ${esc(i.apelido || i.nome)}
+                    </button>`;
+            }
+
+            // data-familia, e não data-tipo: data-tipo já é o clique que
+            // troca a aba entre gás e água.
+            return `
+                <button type="button" class="item-botao item-desenho${escolhido}" data-item="${esc(i.id)}"
+                        data-familia="${esc(i.tipo)}" aria-pressed="${escolhido ? "true" : "false"}"
+                        aria-label="${esc(i.nome)}, ${esc(desenho.popular)}">
+                    ${desenho.svg}
+                    <span class="item-popular">${esc(desenho.popular)}</span>
+                    <span class="item-medida">${esc(desenho.medida)}</span>
+                </button>`;
+        }).join("");
 }
 
 

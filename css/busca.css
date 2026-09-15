@@ -275,6 +275,73 @@
     font-weight: 700;
 }
 
+/* Os itens desenhados. Cartão, e não pílula: o desenho precisa de
+   altura, e o nome do dia a dia embaixo não cabe numa linha só. */
+.itens-desenho {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+}
+
+@media (max-width: 560px) {
+    .itens-desenho { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.item-desenho {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 10px 6px 12px;
+    border-radius: var(--raio);
+    text-align: center;
+}
+
+.item-desenho svg {
+    display: block;
+    width: 100%;
+    max-width: 84px;
+    height: auto;
+    margin-bottom: 4px;
+}
+
+.item-popular {
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--marinho);
+}
+
+.item-medida {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--tinta-fraca);
+}
+
+.item-desenho[data-familia="gas"].escolhido {
+    background: var(--gas-clara);
+    border-color: var(--gas);
+}
+
+/* As peças dos desenhos. Em classe, e não em atributo: fill="var(...)"
+   não funciona no SVG, e daqui as cores seguem as da marca. */
+.d-texto        { font-family: var(--titulo); font-weight: 700; }
+.d-gas-corpo    { fill: var(--gas); }
+.d-gas-escuro   { fill: #b9650b; }
+.d-furo         { fill: #fff; opacity: .6; }
+.d-brilho       { fill: #fff; opacity: .28; }
+/* Marinho, e não branco, em cima do laranja: branco nele não passa
+   de 2,5 de contraste, e o nome dentro é justamente o que se lê. */
+.d-texto-gas    { fill: var(--marinho); }
+
+.d-agua-corpo   { fill: #d6ecff; stroke: var(--agua); stroke-width: 2; }
+.d-agua-garrafa { fill: #d6ecff; stroke: var(--agua); stroke-width: 1.5; }
+.d-agua-escuro  { fill: var(--agua-escura); }
+.d-agua-alca    { fill: none; stroke: var(--agua-escura); stroke-width: 3; }
+.d-costura      { stroke: var(--agua); stroke-width: 1.5; opacity: .6; }
+.d-texto-agua   { fill: var(--marinho); }
+.d-texto-faixa  { fill: #fff; }
+
 
 /* ==========================================
    OS RESULTADOS
