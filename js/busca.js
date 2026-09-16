@@ -1,43 +1,60 @@
 // ==========================================
 // ACHEI ÁGUA & GÁS
 // Arquivo: busca.js
-// Versão: 2.0
+// Versão: 3.0
 // ==========================================
 
 /*
-   A tela do cliente, em dois passos e uma lista que se refaz sozinha.
+   A tela do cliente, de cima para baixo:
 
-     1. o que você quer
-     2. o local da entrega — e a lista já aparece embaixo
+     1. onde entregar — o mapa já abre na localização do aparelho, e a
+        pessoa só completa o número e a observação. Ou toca em "entregar
+        em outro endereço" e digita a rua ou o CEP.
+     2. o que você quer
+     3. a lista, que se refaz sozinha
+
+   O SITE VALE PARA O BRASIL INTEIRO. Não existe escolha de cidade: a
+   busca mede a distância a partir do ponto, e o raio de entrega de cada
+   revenda decide quem atende ali.
+
+   O GPS DECIDE A LISTA, E NÃO A ENTREGA. Dentro de casa ele erra de
+   quarteirão, e o entregador precisa de rua e número. Por isso a rua
+   que o mapa achou aparece escrita para a pessoa conferir, o número é
+   digitado por ela, e o WhatsApp não abre sem ele. Se a rua estiver
+   errada, "entregar em outro endereço" resolve.
 
    NÃO EXISTE BOTÃO DE CONFIRMAR. Quem já disse onde está e marcou o
-   botijão respondeu tudo o que a busca precisa; pedir mais um clique
-   para "fechar o pedido" é cobrar um passo que não decide nada. Marcar
-   outro item, ou trocar entre entregar e buscar, refaz a lista na hora.
-
-   Os dois passos ficam abertos. O do endereço não encolhe depois de
-   achado: com o CEP a rua se preenche e o mapa já aparece, mas o
-   número e o complemento a pessoa ainda vai escrever — sumir com os
-   campos nessa hora era tirar da mão dela o que estava digitando.
-
-   Sem tela nova de propósito: endereço errado é o erro mais comum aqui,
-   e o mais caro, já que decide a lista inteira. Voltar para corrigir
-   não pode custar uma navegação.
+   botijão respondeu tudo o que a busca precisa. Marcar outro item, ou
+   trocar entre entregar e buscar, refaz a lista na hora.
 
    O PEDIDO É UMA LISTA, e não um item só. Quem está com o botijão
    vazio muitas vezes está com o galão vazio também, e comprar os dois
-   na mesma revenda é uma entrega em vez de duas. Marca o gás, marca a
-   água, e fecha o pedido.
+   na mesma revenda é uma entrega em vez de duas.
 
-   O que a pessoa respondeu fica guardado no navegador. Quem pede gás
-   pede de novo do mesmo lugar, e digitar o endereço toda vez é o tipo
-   de atrito que faz desinstalar.
+   O que a pessoa respondeu fica guardado no navegador: o outro
+   endereço, e o número e a observação de quem usa a localização. Quem
+   pede gás pede de novo do mesmo lugar.
 */
 
+// O outro endereço digitado. A chave é a mesma de quando só existia
+// o endereço escrito, e o que ficou guardado daquela época continua
+// servindo.
 const GUARDADO = "achei-agua-gas:onde";
+// O número e a observação de quem usa a localização, com a rua a que
+// eles pertencem: em outra rua, não valem.
+const GUARDADO_AQUI = "achei-agua-gas:aqui";
 
 const estado = {
-    onde: null,       // { lat, lng, escrito }
+    // Onde o aparelho disse que a pessoa está:
+    // { lat, lng, precisao, campos: { rua, bairro, cidade, uf } }.
+    // campos é null quando o mapa não achou nome de rua.
+    aqui: null,
+    // true quando a entrega é no endereço digitado, e não no do aparelho.
+    usandoOutro: false,
+    // O outro endereço já achado no mapa, para voltar a ele sem procurar.
+    outro: null,
+    // O ponto que a busca usa agora: { lat, lng, escrito, como, campos }.
+    onde: null,
     tipo: "gas",      // a aba aberta: "gas" ou "agua"
     pedido: [],       // os itens marcados, na ordem em que foram marcados
     modo: "entrega",  // "entrega" ou "retirada"
@@ -61,6 +78,10 @@ const PAGAMENTOS = {
     dinheiro: { nome: "Dinheiro",          curto: "dinheiro" }
 };
 
+// Acima disto a posição é do computador de mesa ou de um celular sem
+// GPS ligado, e costuma errar o bairro. A pessoa é avisada.
+const PRECISAO_DUVIDOSA_M = 500;
+
 
 /* ==========================================
    RECADOS
@@ -74,26 +95,68 @@ function avisar(texto, tipo) {
     if (texto) recado.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
+function valorDe(id) {
+    return document.getElementById(id).value.trim();
+}
+
+function guardar(chave, valor) {
+    try {
+        localStorage.setItem(chave, JSON.stringify(valor));
+    } catch (e) {
+        // Navegador anônimo, ou site bloqueado de guardar. A busca
+        // funciona igual; só não lembra na próxima visita.
+    }
+}
+
+function lembrar(chave) {
+    try {
+        return JSON.parse(localStorage.getItem(chave) || "null");
+    } catch (e) {
+        return null;
+    }
+}
+
 
 /* ==========================================
-   PASSO 2 — O LOCAL DA ENTREGA
+   PASSO 1 — ONDE ENTREGAR
 ========================================== */
 
-const CAMPOS = ["rua", "numero", "complemento", "bairro", "cidade", "uf"];
+// Os campos do outro endereço, na ordem do formulário.
+const CAMPOS_OUTRO = ["rua", "numero", "complemento", "bairro", "cidade", "uf"];
 
-function lerCampos() {
+function lerFormulario() {
     const campos = {};
-    CAMPOS.forEach((id) => { campos[id] = document.getElementById(id).value.trim(); });
+    CAMPOS_OUTRO.forEach((id) => { campos[id] = valorDe(id); });
     return campos;
 }
 
-function preencherCampos(campos) {
-    CAMPOS.forEach((id) => {
-        if (campos[id] !== undefined) document.getElementById(id).value = campos[id];
+function preencherFormulario(campos) {
+    CAMPOS_OUTRO.forEach((id) => {
+        if (campos[id] !== undefined && campos[id] !== null) {
+            document.getElementById(id).value = campos[id];
+        }
     });
 }
 
-/** "Rua X, 120, apto 302 - Centro, Alfenas/MG". */
+/**
+ * O endereço da entrega, do jeito que vai para o WhatsApp: o digitado,
+ * ou o do aparelho com o número e a observação escritos pela pessoa.
+ */
+function lerCampos() {
+    if (estado.usandoOutro) return lerFormulario();
+
+    const a = (estado.aqui && estado.aqui.campos) || {};
+    return {
+        rua: a.rua || "",
+        numero: valorDe("numero-aqui"),
+        complemento: valorDe("complemento-aqui"),
+        bairro: a.bairro || "",
+        cidade: a.cidade || "",
+        uf: a.uf || ""
+    };
+}
+
+/** "Rua X, 120, apto 302 - Centro, Belo Horizonte/MG". */
 function enderecoEscrito(c) {
     const cidade = [c.cidade, c.uf].filter(Boolean).join("/");
 
@@ -109,6 +172,130 @@ function cepNoCampo(texto) {
 }
 
 
+/* ------------------------------------------
+   A localização do aparelho
+------------------------------------------ */
+
+async function localizar() {
+    const explica = document.getElementById("explica-onde");
+    explica.textContent = "Procurando onde você está...";
+
+    let posicao;
+    try {
+        posicao = await ondeEstouPeloAparelho(12000);
+    } catch (erro) {
+        // Sem localização, o outro endereço é o único caminho, e ele já
+        // abre: um botão a mais para chegar ao formulário seria só atrito.
+        explica.textContent = erro.message;
+        document.getElementById("botao-aqui").hidden = true;
+        abrirOutro();
+        return;
+    }
+
+    explica.textContent = "Achando o nome da rua...";
+    const campos = await enderecoDaCoordenada(posicao.lat, posicao.lng);
+
+    estado.aqui = { lat: posicao.lat, lng: posicao.lng, precisao: posicao.precisao, campos };
+
+    // O número e a observação da última vez, se a rua for a mesma.
+    const guardado = lembrar(GUARDADO_AQUI);
+    if (campos && guardado && guardado.rua === campos.rua) {
+        document.getElementById("numero-aqui").value = guardado.numero || "";
+        document.getElementById("complemento-aqui").value = guardado.complemento || "";
+    }
+    if (campos && campos.numero) {
+        document.getElementById("numero-aqui").placeholder = "Ex: " + campos.numero;
+    }
+
+    // A pessoa pode ter aberto o outro endereço enquanto o GPS demorava.
+    // O que ela escolheu vale mais do que o que o aparelho respondeu.
+    if (!estado.usandoOutro) usarAqui();
+}
+
+
+/** Volta para o endereço do aparelho. */
+function usarAqui() {
+    if (!estado.aqui) return;
+
+    estado.usandoOutro = false;
+    pedidoDeLugar++;
+
+    const campos = estado.aqui.campos;
+    const aproximada = estado.aqui.precisao > PRECISAO_DUVIDOSA_M;
+
+    document.getElementById("form-endereco").hidden = true;
+    document.getElementById("botao-aqui").hidden = true;
+    document.getElementById("botao-outro").hidden = false;
+    document.getElementById("campos-aqui").hidden = !campos;
+    document.getElementById("aviso-endereco").hidden = true;
+
+    const explica = document.getElementById("explica-onde");
+    if (!campos) {
+        explica.textContent = "Achamos você no mapa, mas não o nome da rua. "
+            + "A lista já mostra quem atende aí; para a entrega, use outro endereço.";
+    } else if (aproximada) {
+        explica.textContent = "A sua localização veio aproximada, com erro de uns "
+            + kmEscrito(estado.aqui.precisao / 1000) + ". Confira a rua abaixo; "
+            + "se não for a sua, entregue em outro endereço.";
+    } else {
+        explica.textContent = "Confira a rua e complete com o número.";
+    }
+
+    definirOnde({
+        lat: estado.aqui.lat,
+        lng: estado.aqui.lng,
+        // Sem o número do mapa, que é palpite: o que vale é o que a
+        // pessoa digitar no campo.
+        escrito: campos ? enderecoEscrito({ ...campos, numero: "" }) : "a sua localização",
+        como: "aparelho",
+        campos
+    });
+}
+
+
+/** Abre o formulário do outro endereço. */
+function abrirOutro() {
+    estado.usandoOutro = true;
+
+    document.getElementById("form-endereco").hidden = false;
+    document.getElementById("campos-aqui").hidden = true;
+    document.getElementById("botao-outro").hidden = true;
+    document.getElementById("botao-aqui").hidden = !estado.aqui;
+    document.getElementById("aviso-endereco").hidden = true;
+
+    // A cidade e o estado do aparelho servem de ponto de partida: quase
+    // sempre o outro endereço é na mesma cidade.
+    const a = estado.aqui && estado.aqui.campos;
+    if (a && !valorDe("cidade")) preencherFormulario({ cidade: a.cidade, uf: a.uf });
+
+    if (estado.outro) {
+        definirOnde(estado.outro);
+        return;
+    }
+
+    // Ainda sem outro endereço achado: o mapa e a lista do aparelho saem
+    // da tela, senão a pessoa veria preços de um lugar onde não vai
+    // receber.
+    esconderOnde();
+    document.getElementById("rua").focus();
+}
+
+
+function esconderOnde() {
+    estado.onde = null;
+    document.getElementById("resumo-onde").hidden = true;
+    const mapa = document.getElementById("mapa-onde");
+    mapa.hidden = true;
+    mapa.innerHTML = "";
+    delete mapa.dataset.ponto;
+    document.getElementById("resultados").hidden = true;
+}
+
+
+/* ------------------------------------------
+   O outro endereço, digitado
+------------------------------------------ */
+
 /*
    O CEP de que veio a rua que está no campo. Sai quando a pessoa mexe
    na rua: com a rua trocada à mão, a coordenada do CEP antigo mediria
@@ -120,7 +307,8 @@ let cepProcurado = null;
 /*
    Cada busca de lugar ganha um número, e só a resposta da última vale.
    Sem isso, a busca que o CEP disparou podia chegar depois da que o
-   bairro corrigido disparou, e passar por cima dela.
+   bairro corrigido disparou, e passar por cima dela — ou a do outro
+   endereço chegar depois de a pessoa ter voltado para a localização.
 */
 let pedidoDeLugar = 0;
 
@@ -150,7 +338,7 @@ async function aoDigitarRua() {
 
     avisar("");
     campoRua.value = achado.rua;
-    preencherCampos({ bairro: achado.bairro, cidade: achado.cidade, uf: achado.uf });
+    preencherFormulario({ bairro: achado.bairro, cidade: achado.cidade, uf: achado.uf.toUpperCase() });
     cepDaRua = cep;
 
     if (!achado.rua) {
@@ -169,10 +357,17 @@ async function aoDigitarRua() {
 async function usarEndereco(evento) {
     if (evento) evento.preventDefault();
 
-    const campos = lerCampos();
+    const campos = lerFormulario();
 
     if (!campos.rua) {
         avisar("Escreva a rua, ou use o CEP no lugar dela.", "erro");
+        return;
+    }
+
+    // Sem cidade, "Rua São Paulo" é rua de qualquer lugar do país.
+    if (!campos.cidade || !campos.uf) {
+        avisar("Preencha a cidade e o estado, ou use o CEP.", "erro");
+        document.getElementById(campos.cidade ? "uf" : "cidade").focus();
         return;
     }
 
@@ -188,42 +383,44 @@ async function usarEndereco(evento) {
         rua: cepDigitado ? null : campos.rua,
         bairro: campos.bairro,
         cidade: campos.cidade,
-        uf: campos.uf || null
+        uf: campos.uf
     });
 
     botao.disabled = false;
     botao.textContent = "Achar este endereço";
 
-    // Enquanto o mapa procurava, outra busca de lugar começou.
-    if (vez !== pedidoDeLugar) return;
+    // Enquanto o mapa procurava, outra busca de lugar começou, ou a
+    // pessoa voltou para a localização do aparelho.
+    if (vez !== pedidoDeLugar || !estado.usandoOutro) return;
 
     if (!achado) {
         avisar("Não achei esse endereço. Confira a rua, o bairro e a cidade.", "erro");
         return;
     }
 
-    definirOnde({
+    estado.outro = {
         lat: achado.lat,
         lng: achado.lng,
         escrito: enderecoEscrito(campos),
         como: "endereco",
         campos
-    });
+    };
+    guardar(GUARDADO, estado.outro);
+
+    definirOnde(estado.outro);
 }
 
+
+/* ------------------------------------------
+   O ponto da busca
+------------------------------------------ */
 
 function definirOnde(onde) {
     estado.onde = onde;
 
-    try {
-        localStorage.setItem(GUARDADO, JSON.stringify(onde));
-    } catch (e) {
-        // Navegador anônimo, ou site bloqueado de guardar. A busca
-        // funciona igual; só não lembra na próxima visita.
-    }
-
     const resumo = document.getElementById("resumo-onde");
-    resumo.innerHTML = "Buscando perto de<small>" + esc(onde.escrito) + "</small>";
+    const rotulo = onde.como === "aparelho" ? "Você está em" : "Entregar em";
+    resumo.innerHTML = esc(rotulo) + "<small>" + esc(onde.escrito) + "</small>";
     resumo.hidden = false;
 
     desenharMapa(onde);
@@ -248,8 +445,8 @@ function desenharMapa(onde) {
     mapa.dataset.ponto = ponto;
 
     mapa.innerHTML =
-        `<iframe src="https://maps.google.com/maps?q=${ponto}&z=16&output=embed"
-                 title="Onde você está, no mapa" loading="lazy"></iframe>
+        `<iframe src="https://maps.google.com/maps?q=${ponto}&z=17&output=embed"
+                 title="Onde entregar, no mapa" loading="lazy"></iframe>
          <a href="https://www.google.com/maps/search/?api=1&query=${ponto}"
             target="_blank" rel="noopener">Abrir no Google Maps</a>`;
     mapa.hidden = false;
@@ -257,7 +454,7 @@ function desenharMapa(onde) {
 
 
 /* ==========================================
-   PASSO 1 — O QUE VOCÊ QUER
+   PASSO 2 — O QUE VOCÊ QUER
 ========================================== */
 
 /**
@@ -421,6 +618,8 @@ function escolherModo(modo) {
     // Na retirada nada é entregue: o endereço é só de onde a pessoa sai.
     document.getElementById("titulo-onde").textContent =
         modo === "retirada" ? "Onde você está" : "Local da entrega";
+    document.getElementById("botao-outro").textContent =
+        modo === "retirada" ? "Buscar a partir de outro endereço" : "Entregar em outro endereço";
 
     if (estado.onde && estado.pedido.length) procurar();
 }
@@ -725,14 +924,59 @@ function cartao(r, pedidos, menorTotal) {
  * Sem forma de pagamento, o clique não sai. Responder uma pergunta
  * antes é melhor do que descobrir na porta que a revenda não aceita.
  */
-// O que a entrega não dispensa. O complemento fica de fora: casa não tem.
-const OBRIGATORIOS_DA_ENTREGA = [
+// O que a entrega não dispensa, no outro endereço. O complemento fica
+// de fora: casa não tem.
+const OBRIGATORIOS_DO_OUTRO = [
     { id: "rua",    nome: "a rua" },
     { id: "numero", nome: "o número" },
     { id: "bairro", nome: "o bairro" },
     { id: "cidade", nome: "a cidade" },
     { id: "uf",     nome: "o estado" }
 ];
+
+/**
+ * O que falta no endereço da entrega, como um problema para o
+ * completarZap, ou null.
+ *
+ * Na localização do aparelho, a rua, o bairro e a cidade vieram do
+ * mapa; da pessoa só se cobra o número. Sem rua achada, a única saída
+ * é o outro endereço.
+ */
+function faltaNoEndereco() {
+    if (!estado.usandoOutro) {
+        if (!estado.aqui || !estado.aqui.campos) {
+            return {
+                aviso: "aviso-endereco",
+                alvo: "botao-outro",
+                texto: "Não achamos o nome da sua rua. Toque em \"Entregar em outro endereço\" e escreva a rua ou o CEP."
+            };
+        }
+
+        if (!valorDe("numero-aqui")) {
+            document.getElementById("numero-aqui").classList.add("faltando");
+            return {
+                aviso: "aviso-endereco",
+                alvo: "numero-aqui",
+                texto: "Para a entrega, falta o número."
+            };
+        }
+
+        return null;
+    }
+
+    const faltam = OBRIGATORIOS_DO_OUTRO.filter((c) => !valorDe(c.id));
+    faltam.forEach((c) => document.getElementById(c.id).classList.add("faltando"));
+
+    if (faltam.length) {
+        return {
+            aviso: "aviso-endereco",
+            alvo: faltam[0].id,
+            texto: "Para a entrega, falta preencher " + emLista(faltam.map((c) => c.nome)) + "."
+        };
+    }
+
+    return null;
+}
 
 function completarZap(evento, link) {
     const r = achadosDaVez.find((x) => x.revenda_id === link.dataset.revenda);
@@ -761,16 +1005,8 @@ function completarZap(evento, link) {
     // O endereço só é exigido na entrega. Quem vai buscar não precisa
     // dizer onde mora para o balcão.
     if (estado.modo === "entrega") {
-        const faltam = OBRIGATORIOS_DA_ENTREGA.filter((c) => !document.getElementById(c.id).value.trim());
-        faltam.forEach((c) => document.getElementById(c.id).classList.add("faltando"));
-
-        if (faltam.length) {
-            problemas.push({
-                aviso: "aviso-endereco",
-                alvo: faltam[0].id,
-                texto: "Para a entrega, falta preencher " + emLista(faltam.map((c) => c.nome)) + "."
-            });
-        }
+        const falta = faltaNoEndereco();
+        if (falta) problemas.push(falta);
     }
 
     document.getElementById("aviso-pagamento").hidden = true;
@@ -792,6 +1028,16 @@ function completarZap(evento, link) {
         alvo.scrollIntoView({ behavior: "smooth", block: "center" });
         if (alvo.matches("input, select")) alvo.focus({ preventScroll: true });
         return;
+    }
+
+    // O número e a observação digitados na localização ficam para a
+    // próxima vez, presos à rua a que pertencem.
+    if (!estado.usandoOutro && estado.aqui && estado.aqui.campos) {
+        guardar(GUARDADO_AQUI, {
+            rua: estado.aqui.campos.rua,
+            numero: valorDe("numero-aqui"),
+            complemento: valorDe("complemento-aqui")
+        });
     }
 
     if (r) link.href = "https://wa.me/" + link.dataset.zap + "?text=" + encodeURIComponent(mensagemDoPedido(r));
@@ -832,7 +1078,7 @@ function mensagemDoPedido(r) {
     linhas.push("*Pagamento:* " + pagamento);
 
     // Na retirada, o endereço não interessa ao balcão.
-    if (entrega && estado.onde && estado.onde.como === "endereco" && campos.rua) {
+    if (entrega && estado.onde && campos.rua) {
         linhas.push("*Endereço:* " + enderecoEscrito(campos));
     }
 
@@ -856,25 +1102,44 @@ function lerTroco() {
 ========================================== */
 
 (async function iniciar() {
+    opcoesDeEstado(document.getElementById("uf"), "", true);
+
     document.getElementById("form-endereco").addEventListener("submit", usarEndereco);
     document.getElementById("rua").addEventListener("input", aoDigitarRua);
+    document.getElementById("botao-outro").addEventListener("click", abrirOutro);
+    document.getElementById("botao-aqui").addEventListener("click", usarAqui);
 
-    // Preencheu o campo apontado, o vermelho sai; preencheu todos, o aviso sai.
-    document.getElementById("form-endereco").addEventListener("input", (evento) => {
-        evento.target.classList.remove("faltando");
-        if (!document.querySelector("#form-endereco .faltando")) {
-            document.getElementById("aviso-endereco").hidden = true;
-        }
+    // Preencheu o campo apontado, o vermelho sai; preencheu todos, o
+    // aviso sai. Vale para o número da localização e para o formulário.
+    const passoOnde = document.getElementById("passo-onde");
+    ["input", "change"].forEach((tipo) => {
+        passoOnde.addEventListener(tipo, (evento) => {
+            evento.target.classList.remove("faltando");
+            if (!passoOnde.querySelector(".faltando")) {
+                document.getElementById("aviso-endereco").hidden = true;
+            }
+        });
     });
 
     // O bairro é o que escolhe o trecho certo de uma avenida comprida.
     // Corrigido à mão depois de o mapa aparecer, o pino se ajusta
     // sozinho, sem precisar tocar em "achar este endereço".
     document.getElementById("bairro").addEventListener("change", () => {
-        if (estado.onde && estado.onde.como === "endereco" && document.getElementById("rua").value.trim()) {
-            usarEndereco();
-        }
+        if (estado.usandoOutro && estado.outro && valorDe("rua")) usarEndereco();
     });
+
+    // O outro endereço da última vez fica pronto no formulário, mas não
+    // passa na frente da localização: quem abrir o site em outro lugar
+    // quer a lista de onde está agora.
+    const lembrado = lembrar(GUARDADO);
+    if (lembrado && Number.isFinite(lembrado.lat) && lembrado.campos && lembrado.campos.rua) {
+        preencherFormulario(lembrado.campos);
+        estado.outro = lembrado;
+    }
+
+    // Sem esperar o catálogo: o navegador pergunta da localização logo
+    // de cara, enquanto os botijões carregam.
+    localizar();
     document.getElementById("so-abertas").addEventListener("change", (evento) => {
         estado.soAbertas = evento.target.checked;
         desenharLista();
@@ -918,18 +1183,4 @@ function lerTroco() {
     }
 
     abrirTipo("gas");
-
-    // Quem já disse onde mora não precisa dizer de novo.
-    try {
-        const lembrado = JSON.parse(localStorage.getItem(GUARDADO) || "null");
-        // Só endereço escrito volta. O lugar guardado pelo GPS, de quando
-        // o site tinha o botão, fica para trás: sem os campos preenchidos,
-        // a pessoa veria um mapa que não tem como conferir nem corrigir.
-        if (lembrado && Number.isFinite(lembrado.lat) && lembrado.campos) {
-            preencherCampos(lembrado.campos);
-            definirOnde(lembrado);
-        }
-    } catch (e) {
-        // Nada guardado, ou guardado torto. Começa do zero.
-    }
 })();

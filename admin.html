@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Cadastros aguardando confirmação de pagamento — Achei Água &amp; Gás</title>
+    <meta name="robots" content="noindex, nofollow">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/formulario.css">
+
+    <style>
+        /* A tela é para ser usada em pé, no celular, com uma mão só:
+           cartão grande, botão largo e nada de tabela que role para o
+           lado. No computador ela só ganha margem. */
+
+        .admin-limite { max-width: 640px; margin: 0 auto; padding: 16px; }
+
+        .admin-topo {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 4px;
+        }
+
+        /* O título é uma frase inteira, e no celular ele quebra em três
+           linhas. Menor que o do painel, de propósito: quem abre esta
+           tela veio ativar alguém, não ler o letreiro. */
+        .admin-topo h1 { font-size: 1.02rem; line-height: 1.3; }
+
+        .admin-conta { font-size: 0.8rem; color: var(--tinta-fraca, #6b7280); }
+
+        .barra-acoes {
+            display: flex;
+            gap: 8px;
+            margin: 14px 0 18px;
+        }
+
+        .barra-acoes .botao,
+        .barra-acoes .botao-vazio { flex: 1; }
+
+        .revenda {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            background: #fff;
+            padding: 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, .06);
+        }
+
+        .revenda h2 { font-size: 1.05rem; margin-bottom: 2px; }
+
+        .revenda .linha {
+            font-size: 0.86rem;
+            color: #475569;
+            margin-top: 3px;
+            word-break: break-word;
+        }
+
+        .revenda .linha strong { color: #0f172a; font-weight: 600; }
+
+        .selo-espera,
+        .selo-suspensa {
+            display: inline-block;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: .3px;
+            padding: 3px 9px;
+            border-radius: 999px;
+            margin-bottom: 6px;
+        }
+
+        .selo-espera { background: #fff4ec; color: #9a3412; }
+        .selo-suspensa { background: #fee2e2; color: #991b1b; }
+
+        /* O plano nasce marcado com o que a revenda escolheu na hora de
+           pagar. Trocar aqui é para o caso de o comprovante vir com
+           outro valor — acontece, e sem esta escolha a saída seria
+           ativar errado e consertar no banco depois. */
+        .escolha-plano {
+            display: flex;
+            gap: 8px;
+            margin: 12px 0 10px;
+        }
+
+        .escolha-plano label {
+            flex: 1;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 9px 6px;
+            text-align: center;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .escolha-plano input { position: absolute; opacity: 0; pointer-events: none; }
+
+        .escolha-plano label:has(input:checked) {
+            border-color: #2563eb;
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-weight: 700;
+        }
+
+        .revenda .botao { width: 100%; }
+
+        .acoes-linha { display: flex; gap: 8px; margin-top: 8px; }
+        .acoes-linha > * { flex: 1; }
+
+        .vazio {
+            text-align: center;
+            color: #64748b;
+            padding: 36px 12px;
+            font-size: 0.95rem;
+        }
+
+        .ativadas { margin-top: 26px; }
+
+        .ativadas h2 {
+            font-size: 0.95rem;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+
+        .ativada {
+            font-size: 0.85rem;
+            color: #166534;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 10px;
+            padding: 9px 12px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .ativada .botao-vazio { padding: 4px 10px; font-size: 0.78rem; }
+    </style>
+</head>
+
+<body>
+
+    <main class="admin-limite">
+
+        <div class="admin-topo">
+            <h1>Cadastros aguardando confirmação de pagamento e liberação</h1>
+            <button type="button" class="botao-vazio botao-miudo" id="botao-sair" hidden>Sair</button>
+        </div>
+        <p class="admin-conta" id="quem-sou"></p>
+
+        <p id="recado" class="recado" role="alert" hidden></p>
+
+        <!-- ENTRAR -->
+        <section class="passo" id="bloco-entrar" hidden>
+            <h2>Entrar</h2>
+            <p class="explica">Use a mesma conta que você cadastrou como administrador.</p>
+
+            <form id="form-entrar">
+                <div class="campo">
+                    <label for="email">E-mail</label>
+                    <input type="email" id="email" autocomplete="email" required>
+                </div>
+
+                <div class="campo">
+                    <label for="senha">Senha</label>
+                    <div class="linha-senha">
+                        <input type="password" id="senha" autocomplete="current-password" required>
+                        <button type="button" class="botao-vazio botao-miudo" data-ver-senha="senha">Mostrar</button>
+                    </div>
+                </div>
+
+                <button type="submit" class="botao" id="botao-entrar">Entrar</button>
+            </form>
+        </section>
+
+        <!-- A LISTA -->
+        <section id="bloco-lista" hidden>
+            <div class="barra-acoes">
+                <button type="button" class="botao-vazio" id="botao-atualizar">Atualizar lista</button>
+            </div>
+
+            <div id="lista"></div>
+
+            <div class="ativadas" id="bloco-ativadas" hidden>
+                <h2>Ativadas agora</h2>
+                <div id="ativadas"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/banco.js"></script>
+    <script src="js/admin.js"></script>
+
+</body>
+</html>

@@ -83,6 +83,47 @@ function ondeEstouPeloAparelho(prazoMs = 10000) {
 }
 
 
+/**
+ * A rua, o bairro, a cidade e o estado de uma coordenada.
+ *
+ * É o caminho de volta do GPS: o ponto decide a lista, mas o
+ * entregador precisa de nome de rua. O que vier aqui é o que a pessoa
+ * confere na tela antes de digitar o número — e, se estiver errado,
+ * ela troca pelo "entregar em outro endereço".
+ *
+ * Devolve null quando o mapa não responde ou não acha rua nenhuma.
+ */
+async function enderecoDaCoordenada(lat, lng) {
+    try {
+        const u = "https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18&addressdetails=1"
+                + "&accept-language=pt-BR&lat=" + encodeURIComponent(lat) + "&lon=" + encodeURIComponent(lng);
+
+        const r = await fetch(u, { headers: { Accept: "application/json" }, signal: prazoCurto(10000) });
+        if (!r.ok) return null;
+
+        const a = (await r.json()).address;
+        if (!a || !a.road) return null;
+
+        // O estado vem como "BR-MG" num campo de nome esquisito, e é o
+        // único jeito de ter a sigla sem uma tabela de nomes aqui.
+        const iso = a["ISO3166-2-lvl4"] || "";
+
+        return {
+            rua: a.road,
+            // O número que o mapa sugere é chute na maioria das ruas do
+            // Brasil. Vai só como sugestão no campo, para a pessoa corrigir.
+            numero: a.house_number || "",
+            bairro: a.suburb || a.neighbourhood || a.quarter || a.city_district || "",
+            cidade: a.city || a.town || a.village || a.municipality || "",
+            uf: iso.startsWith("BR-") ? iso.slice(3) : ""
+        };
+    } catch (e) {
+        console.warn("Não consegui o nome da rua desta coordenada:", e);
+        return null;
+    }
+}
+
+
 /* ==========================================
    PELO ENDEREÇO ESCRITO
 ========================================== */

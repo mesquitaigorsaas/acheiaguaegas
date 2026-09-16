@@ -62,8 +62,12 @@ function crcPix(texto) {
  *
  * O identificador leva o começo do id da revenda. Nem todo banco mostra
  * no extrato, mas quando mostra, é a revenda escrita ali.
+ *
+ * A cidade do recebedor (campo 60) é obrigatória no padrão do Pix, mas
+ * nenhum banco a confere com a conta: quem decide para onde vai o
+ * dinheiro é a chave. Vai "BRASIL", e ninguém precisa mexer nela.
  */
-function codigoPix({ chave, recebedor, cidade, valor, identificador }) {
+function codigoPix({ chave, recebedor, valor, identificador }) {
     const conta = campoPix("00", "br.gov.bcb.pix") + campoPix("01", String(chave).trim());
     const txid = textoPix(identificador, 25).replace(/ /g, "") || "***";
 
@@ -75,7 +79,7 @@ function codigoPix({ chave, recebedor, cidade, valor, identificador }) {
         + campoPix("54", Number(valor).toFixed(2))
         + campoPix("58", "BR")
         + campoPix("59", textoPix(recebedor, 25))
-        + campoPix("60", textoPix(cidade, 15))
+        + campoPix("60", "BRASIL")
         + campoPix("62", campoPix("05", txid))
         + "6304";
 
@@ -134,7 +138,6 @@ function desenharPagamento(onde, revenda) {
         codigo = codigoPix({
             chave: PIX.chave,
             recebedor: PIX.recebedor,
-            cidade: PIX.cidade,
             valor: p.preco,
             identificador: "AAG" + String(revenda.id || "").replace(/-/g, "")
         });

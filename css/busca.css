@@ -197,10 +197,10 @@
 
 .linha-endereco.estado-no-fim { grid-template-columns: minmax(0, 1fr) 96px; }
 
-/* O lugar achado, embaixo do formulário, e o formulário continua
-   aberto em cima: a pessoa ainda pode estar digitando o número. */
+/* O mapa abre o passo, e a rua achada vem logo embaixo dele: é o que a
+   pessoa confere antes de digitar o número. */
 .onde-achado {
-    margin: 18px 0 8px;
+    margin: 12px 0 14px;
     font-size: 14px;
     font-weight: 600;
     color: var(--marinho);
@@ -234,6 +234,29 @@
     font-size: 13.5px;
     font-weight: 600;
     color: var(--agua-escura);
+}
+
+/* O outro endereço abre embaixo, separado por uma linha: é um endereço
+   inteiro, e não mais um campo do de cima. */
+.form-outro {
+    margin-top: 4px;
+    padding-top: 16px;
+    border-top: 1px solid var(--linha);
+}
+
+/* Voltar para a localização é saída, e não ação principal: link, e não
+   botão cheio disputando com o "achar este endereço". */
+.botao-link {
+    display: block;
+    margin: 12px auto 0;
+    padding: 8px 12px;
+    background: none;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--agua-escura);
+    text-decoration: underline;
+    cursor: pointer;
 }
 
 

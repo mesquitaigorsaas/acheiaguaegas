@@ -80,9 +80,16 @@
                     errado põe a sua revenda no lugar errado da lista.
                 </p>
 
+                <!-- O estado numa lista fechada: é o que separa a "Rua da
+                     Bahia" de BH da de Salvador quando o mapa procura. -->
+                <div class="campo">
+                    <label for="uf">Estado</label>
+                    <select id="uf" autocomplete="address-level1" required></select>
+                </div>
+
                 <div class="campo">
                     <label for="cep">CEP</label>
-                    <input type="text" id="cep" inputmode="numeric" placeholder="37130-000" autocomplete="postal-code">
+                    <input type="text" id="cep" inputmode="numeric" placeholder="00000-000" autocomplete="postal-code">
                 </div>
 
                 <div class="linha-campos">
@@ -101,15 +108,9 @@
                     <input type="text" id="bairro" autocomplete="address-level3">
                 </div>
 
-                <div class="linha-campos">
-                    <div class="campo cresce">
-                        <label for="cidade">Cidade</label>
-                        <input type="text" id="cidade" autocomplete="address-level2" required>
-                    </div>
-                    <div class="campo estreito">
-                        <label for="uf">UF</label>
-                        <input type="text" id="uf" maxlength="2" value="MG" autocomplete="address-level1" required>
-                    </div>
+                <div class="campo">
+                    <label for="cidade">Cidade</label>
+                    <input type="text" id="cidade" autocomplete="address-level2" required>
                 </div>
 
                 <button type="button" class="botao-vazio" id="botao-achar-endereco">
@@ -125,7 +126,7 @@
 
                 <div class="campo">
                     <label for="whatsapp">WhatsApp que recebe os pedidos</label>
-                    <input type="tel" id="whatsapp" inputmode="numeric" placeholder="35999999999" required>
+                    <input type="tel" id="whatsapp" inputmode="numeric" placeholder="31999999999" required>
                     <p class="dica">
                         Só números, com o DDD. É este que aparece na lista e
                         para onde o pedido do cliente vai.
@@ -139,7 +140,7 @@
 
                 <div class="campo">
                     <label for="telefone">Seu telefone</label>
-                    <input type="tel" id="telefone" inputmode="numeric" placeholder="35988887777" required>
+                    <input type="tel" id="telefone" inputmode="numeric" placeholder="31988887777" required>
                     <p class="dica">
                         Para falarmos com você caso necessário.
                         Não aparece para o cliente.
@@ -215,6 +216,7 @@
     <script src="js/distancia.js"></script>
     <script src="js/onde.js"></script>
     <script src="js/banco.js"></script>
+    <script src="js/estados.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
     <script src="js/planos.js"></script>
     <script src="js/pix.js"></script>

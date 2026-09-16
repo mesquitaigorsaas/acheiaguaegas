@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Achei Água &amp; Gás — quem entrega perto de você, e por quanto</title>
-    <meta name="description" content="Diga onde você está e veja quem entrega água e gás no seu endereço, aberto agora, com o preço na tela.">
+    <meta name="description" content="Em qualquer lugar do Brasil: veja quem entrega água e gás no seu endereço, aberto agora, com o preço na tela.">
 
     <meta property="og:title" content="Achei Água &amp; Gás">
     <meta property="og:description" content="Quem entrega água e gás perto de você, aberto agora, e por quanto.">
@@ -46,9 +46,87 @@
 
         <p id="recado" class="recado" role="alert" hidden></p>
 
-        <!-- PASSO 1 — primeiro o que a pessoa precisa, e só depois onde.
-             É a ordem em que ela pensa: "acabou o gás", e não "moro na
-             rua tal". -->
+        <!-- PASSO 1 — onde entregar. O mapa abre na localização do
+             aparelho, e ela decide a lista. Mas dentro de casa o GPS
+             erra de quarteirão, e o entregador precisa de rua e número:
+             por isso a rua achada aparece escrita para conferir, o
+             número é da pessoa, e o outro endereço está a um toque. -->
+        <section class="passo" id="passo-onde">
+            <h2 id="titulo-onde">Local da entrega</h2>
+            <p class="explica" id="explica-onde">Procurando onde você está...</p>
+
+            <!-- O ponto que a busca vai usar. Ver o pino é o jeito de a
+                 pessoa perceber que a localização, ou o endereço digitado,
+                 caiu no lugar errado antes de comparar distâncias. -->
+            <div id="lugar-achado">
+                <div class="mapa-onde" id="mapa-onde" hidden></div>
+                <p class="onde-achado" id="resumo-onde" hidden></p>
+            </div>
+
+            <!-- Na localização do aparelho, só o que o mapa não sabe. -->
+            <div class="linha-endereco" id="campos-aqui" hidden>
+                <div class="campo">
+                    <label for="numero-aqui">Número</label>
+                    <input type="text" id="numero-aqui" inputmode="numeric" autocomplete="off">
+                </div>
+
+                <div class="campo">
+                    <label for="complemento-aqui">Observação</label>
+                    <input type="text" id="complemento-aqui" placeholder="Apto, bloco, ponto de referência" autocomplete="address-line2">
+                </div>
+            </div>
+
+            <button type="button" class="botao-vazio" id="botao-outro">Entregar em outro endereço</button>
+
+            <form id="form-endereco" class="form-outro" novalidate hidden>
+                <div class="campo">
+                    <label for="rua">Rua ou CEP</label>
+                    <input type="text" id="rua" placeholder="Escreva a rua, ou o CEP" autocomplete="address-line1">
+                    <p class="dica">Com o CEP, a rua, o bairro e a cidade se preenchem sozinhos.</p>
+                </div>
+
+                <!-- Número e complemento não entram na busca do mapa, que
+                     com eles quase não acha nada. Vão na mensagem do
+                     WhatsApp: é o que o entregador precisa. -->
+                <div class="linha-endereco">
+                    <div class="campo">
+                        <label for="numero">Número</label>
+                        <input type="text" id="numero" inputmode="numeric" autocomplete="off">
+                    </div>
+
+                    <div class="campo">
+                        <label for="complemento">Complemento</label>
+                        <input type="text" id="complemento" placeholder="Apto, bloco, casa dos fundos" autocomplete="address-line2">
+                    </div>
+                </div>
+
+                <div class="campo">
+                    <label for="bairro">Bairro</label>
+                    <input type="text" id="bairro" autocomplete="address-level3">
+                </div>
+
+                <div class="linha-endereco estado-no-fim">
+                    <div class="campo">
+                        <label for="cidade">Cidade</label>
+                        <input type="text" id="cidade" autocomplete="address-level2">
+                    </div>
+
+                    <div class="campo">
+                        <label for="uf">Estado</label>
+                        <select id="uf" autocomplete="address-level1"></select>
+                    </div>
+                </div>
+
+                <button type="submit" class="botao-vazio">Achar este endereço</button>
+            </form>
+
+            <button type="button" class="botao-link" id="botao-aqui" hidden>Voltar para a minha localização</button>
+
+            <p class="aviso-campo" id="aviso-endereco" role="alert" hidden></p>
+        </section>
+
+        <!-- PASSO 2 — o que a pessoa precisa. Marcou, a lista aparece
+             embaixo, já medida do lugar de cima. -->
         <section class="passo" id="passo-oque">
             <h2>O que você quer?</h2>
             <p class="explica">
@@ -112,79 +190,6 @@
 
         </section>
 
-        <!-- PASSO 2 — só endereço escrito. O GPS saiu: dentro de casa ele
-             erra de quarteirão, e o entregador precisa da rua e do número
-             de qualquer jeito. -->
-        <section class="passo" id="passo-onde">
-            <h2 id="titulo-onde">Local da entrega</h2>
-            <p class="explica">É por ele que a gente mede quem está mais perto de você.</p>
-
-            <div class="corpo">
-
-                <form id="form-endereco" novalidate>
-                    <div class="campo">
-                        <label for="rua">Rua</label>
-                        <input type="text" id="rua" placeholder="Escreva a rua, ou use o CEP" autocomplete="address-line1">
-                    </div>
-
-                    <!-- Número e complemento não entram na busca do mapa, que
-                         com eles quase não acha nada. Vão na mensagem do
-                         WhatsApp: é o que o entregador precisa. -->
-                    <div class="linha-endereco">
-                        <div class="campo">
-                            <label for="numero">Número</label>
-                            <input type="text" id="numero" inputmode="numeric" autocomplete="off">
-                        </div>
-
-                        <div class="campo">
-                            <label for="complemento">Complemento</label>
-                            <input type="text" id="complemento" placeholder="Apto, bloco, casa dos fundos" autocomplete="address-line2">
-                        </div>
-                    </div>
-
-                    <div class="campo">
-                        <label for="bairro">Bairro</label>
-                        <input type="text" id="bairro" autocomplete="address-level3">
-                    </div>
-
-                    <div class="linha-endereco estado-no-fim">
-                        <div class="campo">
-                            <label for="cidade">Cidade</label>
-                            <input type="text" id="cidade" autocomplete="address-level2">
-                        </div>
-
-                        <div class="campo">
-                            <label for="uf">Estado</label>
-                            <select id="uf" autocomplete="address-level1">
-                                <option value=""></option>
-                                <option>AC</option><option>AL</option><option>AM</option><option>AP</option>
-                                <option>BA</option><option>CE</option><option>DF</option><option>ES</option>
-                                <option>GO</option><option>MA</option><option>MG</option><option>MS</option>
-                                <option>MT</option><option>PA</option><option>PB</option><option>PE</option>
-                                <option>PI</option><option>PR</option><option>RJ</option><option>RN</option>
-                                <option>RO</option><option>RR</option><option>RS</option><option>SC</option>
-                                <option>SE</option><option>SP</option><option>TO</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="botao-vazio">Achar este endereço</button>
-                </form>
-
-                <p class="aviso-campo" id="aviso-endereco" role="alert" hidden></p>
-            </div>
-
-            <!-- O ponto que a busca vai usar, no mapa. O endereço escrito
-                 pode cair na rua de mesmo nome do outro lado da cidade, ou
-                 no trecho errado de uma avenida comprida: ver o pino é o
-                 jeito de a pessoa perceber antes de comparar distâncias
-                 medidas do lugar errado. -->
-            <div id="lugar-achado">
-                <p class="onde-achado" id="resumo-onde" hidden></p>
-                <div class="mapa-onde" id="mapa-onde" hidden></div>
-            </div>
-        </section>
-
         <!-- PASSO 3 -->
         <section id="resultados" hidden>
             <div class="titulo-lista">
@@ -227,6 +232,7 @@
     <script src="js/distancia.js"></script>
     <script src="js/onde.js"></script>
     <script src="js/banco.js"></script>
+    <script src="js/estados.js"></script>
     <script src="js/desenhos.js"></script>
     <script src="js/busca.js"></script>
 

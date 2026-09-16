@@ -645,6 +645,16 @@ function telaRevenda() {
                 <input type="text" id="endereco" value="${esc(revenda.endereco_texto)}">
             </div>
 
+            <!-- Só leitura: a cidade e o estado vão junto com o ponto no
+                 mapa, e mudam pelo suporte. Revenda antiga não tem os
+                 dois, e o campo nem aparece. -->
+            ${revenda.cidade || revenda.uf ? `
+            <div class="campo">
+                <label for="cidade-revenda">Cidade</label>
+                <input type="text" id="cidade-revenda" readonly tabindex="-1"
+                       value="${esc([revenda.cidade, revenda.uf].filter(Boolean).join(" – "))}">
+            </div>` : ""}
+
             <div class="campo">
                 <label for="logo">Logo</label>
                 <div class="linha-logo">
@@ -681,7 +691,7 @@ async function salvarRevenda() {
 
     const so = whatsapp.startsWith("55") && whatsapp.length > 11 ? whatsapp.slice(2) : whatsapp;
     if (so.length !== 10 && so.length !== 11) {
-        avisar("O WhatsApp precisa ter o DDD e o número. Ex: 35999999999", "erro");
+        avisar("O WhatsApp precisa ter o DDD e o número. Ex: 31999999999", "erro");
         return;
     }
 

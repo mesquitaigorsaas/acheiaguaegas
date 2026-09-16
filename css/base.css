@@ -174,6 +174,16 @@ body {
 .campo input:focus,
 .campo select:focus { border-color: var(--agua); }
 
+/* Preenchido pelo site, e não pela pessoa: com cara de campo parado,
+   para ninguém tentar digitar nele. */
+.campo input[readonly] {
+    background: var(--fundo);
+    color: var(--tinta-fraca);
+    cursor: default;
+}
+
+.campo input[readonly]:focus { border-color: var(--linha); }
+
 .campo .dica {
     margin-top: 6px;
     font-size: 13px;

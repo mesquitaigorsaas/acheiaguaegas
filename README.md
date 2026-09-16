@@ -77,6 +77,11 @@ No SQL Editor, nesta ordem:
 5. `supabase/002-logos.sql`, `supabase/003-horarios-por-dia.sql` e
    `supabase/004-taxa-e-pagamento.sql`, nesta ordem — logos, horário por
    dia e por tipo, e taxa de entrega com formas de pagamento
+6. `supabase/006-admin.sql` — o painel de administração
+7. `supabase/007-estado.sql` — o estado e a cidade da revenda em colunas
+   próprias, e os dois na lista do administrador. **Rode antes de publicar a
+   função de cadastro nova**: ela grava as duas colunas, e sem elas todo
+   cadastro falha.
 
 Depois, a função de cadastro:
 
@@ -93,6 +98,26 @@ npx supabase db query --linked --project-ref mqrcvemdhlyjufvwhvke -f supabase/sc
 ```
 
 O `--linked` é obrigatório junto do `--project-ref`; sozinho, ele é recusado.
+
+---
+
+## O Brasil inteiro
+
+Não existe lista de cidades. A página abre pedindo a localização do
+aparelho, e o mapa mostra o ponto e a rua que achou; a pessoa completa com o
+número e a observação. Se a rua estiver errada, ou a entrega for em outro
+lugar, "Entregar em outro endereço" abre o formulário com rua ou CEP. Sem
+permissão de localização, o formulário já abre sozinho.
+
+O GPS decide a lista; o endereço escrito decide a entrega. O WhatsApp não
+abre sem o número.
+
+A revenda informa o estado num select, e a cidade como o CEP escreve. Os dois
+são informativos — ficam no painel e na lista do administrador. Quem decide
+quem aparece para quem é a distância e o raio de entrega.
+
+A lista dos 27 estados mora em `js/estados.js`, na função de cadastro e na
+trava `uf_valida` do `007-estado.sql`.
 
 ---
 
@@ -146,6 +171,7 @@ anunciar.html           o cadastro da revenda
 js/busca.js             os três passos da busca
 js/anunciar.js          o cadastro, com CNPJ e endereço conferidos
 js/banco.js             de onde vêm os dados, e o modo demonstração
+js/estados.js           os 27 estados, para os selects de endereço
 js/desenhos.js          o desenho de cada botijão e galão de água, com o nome dentro
 js/onde.js              GPS, CEP e nome de rua viram coordenada
 js/distancia.js         a conta da distância e como ela é escrita

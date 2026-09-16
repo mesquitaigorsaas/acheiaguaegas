@@ -30,6 +30,14 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+// Os 27 estados. A mesma lista do js/estados.js e da trava do
+// 007-estado.sql.
+const UFS = [
+    "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
+    "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
+    "RS", "RO", "RR", "SC", "SP", "SE", "TO"
+];
+
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type"
@@ -60,6 +68,8 @@ Deno.serve(async (req) => {
                 whatsapp: semCodigoDePais(somenteNumeros(body.whatsapp)),
                 telefone_responsavel: semCodigoDePais(somenteNumeros(body.telefone)),
                 endereco_texto: String(body.endereco_texto ?? "").trim() || String(body.rua).trim(),
+                cidade: String(body.cidade).trim(),
+                uf: String(body.uf).trim().toUpperCase(),
                 latitude: Number(body.latitude),
                 longitude: Number(body.longitude),
                 // Não existe mais "publicado": o 003-horarios-por-dia.sql
@@ -164,11 +174,17 @@ function validar(body) {
     }
 
     if (String(body.nome).trim().length < 3) return "Informe o nome do estabelecimento.";
+
+    // Sigla fora da lista seria recusada pela trava do banco, com uma
+    // mensagem que o dono não entenderia.
+    if (!UFS.includes(String(body.uf).trim().toUpperCase())) {
+        return "Escolha o estado da revenda.";
+    }
     if (!cnpjValido(body.cnpj)) return "O CNPJ não confere. Veja se algum número saiu trocado.";
 
     const whatsapp = semCodigoDePais(somenteNumeros(body.whatsapp));
     if (whatsapp.length !== 10 && whatsapp.length !== 11) {
-        return "O WhatsApp precisa ter o DDD e o número. Ex: 35999999999";
+        return "O WhatsApp precisa ter o DDD e o número. Ex: 31999999999";
     }
 
     const telefone = semCodigoDePais(somenteNumeros(body.telefone));

@@ -52,7 +52,6 @@ const PLANOS = {
 const PIX = {
     chave: "2e65ca21-3eac-409c-8a65-282eef7897a1",   // a chave aleatória, como o banco mostra
     recebedor: "Igor Vinicius M Costa",   // o nome do titular da conta, até 25 letras
-    cidade: "Alfenas",
     whatsapp: "31999347032"               // DDD + número que recebe os comprovantes
 };
 

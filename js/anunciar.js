@@ -97,6 +97,11 @@ async function acharEndereco() {
     const rua = valor("rua");
     const cidade = valor("cidade");
 
+    if (!ufValida(valor("uf"))) {
+        avisar("Escolha o estado da revenda antes de conferir no mapa.", "erro");
+        return null;
+    }
+
     if (!rua || !cidade) {
         avisar("Preencha a rua e a cidade antes de conferir no mapa.", "erro");
         return null;
@@ -213,16 +218,16 @@ function conferirSenhas() {
 function conferirTudo(dados) {
     if (dados.nome.length < 3) return "Informe o nome do estabelecimento.";
     if (!cnpjValido(dados.cnpj)) return "O CNPJ não confere. Veja se algum número saiu trocado.";
+    if (!ufValida(dados.uf)) return "Escolha o estado da revenda.";
     if (!dados.rua) return "Informe a rua da revenda.";
     if (!dados.cidade) return "Informe a cidade.";
-    if (dados.uf.length !== 2) return "A UF tem duas letras. Ex: MG";
 
     if (dados.whatsapp.length !== 10 && dados.whatsapp.length !== 11) {
-        return "O WhatsApp precisa ter o DDD e o número. Ex: 35999999999";
+        return "O WhatsApp precisa ter o DDD e o número. Ex: 31999999999";
     }
     if (dados.responsavel.length < 3) return "Informe o seu nome.";
     if (dados.telefone.length !== 10 && dados.telefone.length !== 11) {
-        return "O seu telefone precisa ter o DDD e o número. Ex: 35988887777";
+        return "O seu telefone precisa ter o DDD e o número. Ex: 31988887777";
     }
 
     if (!dados.email.includes("@")) return "Informe um e-mail válido.";
@@ -413,6 +418,8 @@ async function aoDigitarCep() {
 ========================================== */
 
 (function iniciar() {
+    opcoesDeEstado(document.getElementById("uf"), "Escolha o estado");
+
     document.getElementById("cnpj").addEventListener("blur", conferirCnpj);
     document.getElementById("cnpj").addEventListener("input", conferirCnpj);
     document.getElementById("logo").addEventListener("change", escolherLogo);
@@ -428,10 +435,13 @@ async function aoDigitarCep() {
     // antigo — o pior dos erros, porque ninguém percebe.
     // O número fica de fora: o mapa não conhece numeração, então ele não
     // muda o ponto — e o CEP já conferiu antes de o dono digitá-lo.
+    // O estado é um select, e trocar opção dispara "change".
     ["cep", "rua", "bairro", "cidade", "uf"].forEach((id) => {
-        document.getElementById(id).addEventListener("input", () => {
-            estado.onde = null;
-            document.getElementById("achado").hidden = true;
+        ["input", "change"].forEach((tipo) => {
+            document.getElementById(id).addEventListener(tipo, () => {
+                estado.onde = null;
+                document.getElementById("achado").hidden = true;
+            });
         });
     });
 

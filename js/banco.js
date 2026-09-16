@@ -116,7 +116,6 @@ async function buscarNaDemonstracao(lat, lng, idsDosItens, modo, raioMax) {
         .map((r) => {
             // Quem não faz o que a pessoa pediu nem entra na conta.
             if (modo === "retirada" ? !r.faz_retirada : !r.faz_entrega) return null;
-
             const precos = {};
             let total = 0;
 
