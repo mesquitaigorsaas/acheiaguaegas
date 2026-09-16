@@ -22,11 +22,20 @@
 
 const DESENHOS = {
     // GÁS
-    "P13": { forma: "botijao", largura: 46, altura: 62, rotulo: "P13", popular: "Botijão de cozinha", medida: "13 kg" },
-    "P45": { forma: "botijao", largura: 52, altura: 86, rotulo: "P45", popular: "Botijão grande", medida: "45 kg · comércio" },
-    "P8":  { forma: "botijao", largura: 40, altura: 50, rotulo: "P8",  popular: "Botijão médio", medida: "8 kg" },
-    "P5":  { forma: "botijao", largura: 34, altura: 42, rotulo: "P5",  popular: "Botijão pequeno", medida: "5 kg" },
-    "P2":  { forma: "botijao", largura: 30, altura: 34, rotulo: "P2",  popular: "Camping e fogareiro", medida: "2 kg" },
+    // Prateados, como na foto que a revenda e o cliente conhecem, cada
+    // modelo com o seu formato: é pelo formato que a pessoa reconhece o
+    // botijão, muito antes de ler a sigla. A sigla vai embaixo, na
+    // etiqueta vermelha, como nas tabelas das distribuidoras.
+    //
+    // As alturas seguem a ordem real (P2 < P5 < P13 < P20 < P45 < P90),
+    // mas comprimidas: na proporção exata o P2 viraria um ponto.
+    "P2":  { forma: "gasP2",  largura: 26, altura: 24, rotulo: "P2",  popular: "Camping e fogareiro", medida: "2 kg" },
+    "P5":  { forma: "gasP5",  largura: 30, altura: 32, rotulo: "P5",  popular: "Botijão pequeno", medida: "5 kg" },
+    "P8":  { forma: "gasP13", largura: 36, altura: 36, rotulo: "P8",  popular: "Botijão médio", medida: "8 kg" },
+    "P13": { forma: "gasP13", largura: 42, altura: 42, rotulo: "P13", popular: "Botijão de cozinha", medida: "13 kg" },
+    "P20": { forma: "gasP20", largura: 22, altura: 62, rotulo: "P20", popular: "Empilhadeira", medida: "20 kg" },
+    "P45": { forma: "gasP45", largura: 28, altura: 74, rotulo: "P45", popular: "Botijão grande", medida: "45 kg · comércio" },
+    "P90": { forma: "gasP90", largura: 50, altura: 78, rotulo: "P90", popular: "Botijão industrial", medida: "90 kg" },
 
     // ÁGUA
     // "Galão de água", sempre inteiro: "galão" sozinho não diz do quê.
@@ -49,25 +58,178 @@ function n(v) {
 }
 
 
-function botijao(d) {
-    const w = d.largura;
-    const h = d.altura;
-    const pe = 5;
-    const alca = Math.round(h * 0.17);   // o aro de cima, que protege a válvula
-    const topo = CHAO - h;
-    const corpoY = topo + alca;
-    const corpoH = h - alca - pe + 2;    // encosta no pé
-    const fonte = Math.min(15, Math.round(w * 0.32));
+/* ------------------------------------------
+   OS BOTIJÕES
+
+   O botijão pisa mais alto que o galão: embaixo dele fica a etiqueta
+   vermelha com a sigla, e o pé do botijão encosta nela, como na
+   tabela das distribuidoras.
+------------------------------------------ */
+
+const CHAO_GAS = 80;
+const ETIQUETA_LARGURA = 34;
+
+/*
+   O prateado é um degradê da esquerda para a direita: escuro nas
+   bordas e claro perto do meio, que é o que faz um retângulo parecer
+   cilindro de metal. Cada desenho ganha o seu, com nome próprio: dois
+   SVGs na mesma página com o mesmo id brigam, e o que some leva o
+   degradê do outro junto.
+*/
+let degradesCriados = 0;
+
+function metal(escuro) {
+    const id = "metal-" + (++degradesCriados);
+    // O P45 é o cinza-chumbo da foto; os outros, prata clara.
+    const tons = escuro
+        ? ["#4f555b", "#9aa0a6", "#dfe2e5", "#8c9298", "#4a5056"]
+        : ["#858b91", "#c9cdd1", "#f5f6f7", "#b4b9be", "#7a8086"];
+    const paradas = [0, 0.28, 0.45, 0.72, 1];
+
+    return {
+        cor: `url(#${id})`,
+        defs: `<defs><linearGradient id="${id}" x1="0" x2="1" y1="0" y2="0">`
+            + tons.map((c, i) => `<stop offset="${paradas[i]}" stop-color="${c}"/>`).join("")
+            + `</linearGradient></defs>`
+    };
+}
+
+/** Um retângulo pintado de metal, com os números já arredondados. */
+function chapa(cor, x, y, w, h, rx = 0) {
+    return `<rect fill="${cor}" x="${n(x)}" y="${n(y)}" width="${n(w)}" height="${n(h)}" rx="${n(rx)}"/>`;
+}
+
+/** Uma peça escura: válvula, furo do aro, recorte do pé. */
+function peca(classe, x, y, w, h, rx = 0) {
+    return `<rect class="${classe}" x="${n(x)}" y="${n(y)}" width="${n(w)}" height="${n(h)}" rx="${n(rx)}"/>`;
+}
+
+/** A linha da solda que dá a volta no corpo. */
+function costura(w, y) {
+    return `<line class="d-metal-costura" x1="${n(MEIO - w / 2 + 2)}" x2="${n(MEIO + w / 2 - 2)}" y1="${n(y)}" y2="${n(y)}"/>`;
+}
+
+/**
+ * Monta o SVG de um botijão: a cunha vermelha atrás do pé, o botijão
+ * que `pecas` desenha, e a etiqueta com a sigla por cima de tudo.
+ */
+function botijaoDe(d, escuro, pecas) {
+    const m = metal(escuro);
+    const x = MEIO - ETIQUETA_LARGURA / 2;
+    const F = CHAO_GAS;
 
     return `
         <svg ${CAIXA}>
-            <rect class="d-gas-escuro" x="${n(MEIO - w * 0.36)}" y="${CHAO - pe}" width="${n(w * 0.72)}" height="${pe}" rx="1.5"/>
-            <rect class="d-gas-escuro" x="${n(MEIO - w * 0.3)}" y="${topo}" width="${n(w * 0.6)}" height="${alca + 6}" rx="4"/>
-            <rect class="d-furo" x="${n(MEIO - w * 0.17)}" y="${topo + 3}" width="${n(w * 0.34)}" height="${n(alca * 0.42)}" rx="2"/>
-            <rect class="d-gas-corpo" x="${n(MEIO - w / 2)}" y="${corpoY}" width="${w}" height="${corpoH}" rx="${n(w * 0.3)}"/>
-            <rect class="d-brilho" x="${n(MEIO - w / 2 + w * 0.13)}" y="${n(corpoY + corpoH * 0.2)}" width="${n(w * 0.08)}" height="${n(corpoH * 0.6)}" rx="${n(w * 0.04)}"/>
-            <text class="d-texto d-texto-gas" x="${MEIO}" y="${n(corpoY + corpoH / 2)}" font-size="${fonte}" text-anchor="middle" dominant-baseline="central">${esc(d.rotulo)}</text>
+            ${m.defs}
+            <polygon class="d-etiqueta-cunha" points="${n(x)},${F} ${n(x + ETIQUETA_LARGURA)},${F - 16} ${n(x + ETIQUETA_LARGURA)},${F}"/>
+            ${pecas(m.cor, d.largura, d.altura, F)}
+            <rect class="d-etiqueta" x="${n(x)}" y="${F}" width="${ETIQUETA_LARGURA}" height="14"/>
+            <text class="d-texto d-texto-etiqueta" x="${MEIO}" y="${F + 7.5}" font-size="10.5" text-anchor="middle" dominant-baseline="central">${esc(d.rotulo)}</text>
         </svg>`;
+}
+
+
+/** P2: bojudo e baixinho, com a válvula à mostra e sem aro. */
+function gasP2(d) {
+    return botijaoDe(d, false, (cor, w, h, F) =>
+        peca("d-metal-escuro", MEIO - w * 0.32, F - 3, w * 0.64, 3, 1)
+        + chapa(cor, MEIO - 3, F - h + 1.5, 6, h * 0.26)
+        + chapa(cor, MEIO - w / 2, F - h * 0.8, w, h * 0.8 - 2, w * 0.42)
+        + peca("d-metal-escuro", MEIO - 4.5, F - h, 9, 2.5, 1)
+    );
+}
+
+
+/** P5: corpo curto, aro baixo em cima e pé com recorte. */
+function gasP5(d) {
+    return botijaoDe(d, false, (cor, w, h, F) =>
+        chapa(cor, MEIO - w * 0.36, F - 5, w * 0.72, 5, 1)
+        + peca("d-metal-furo", MEIO - w * 0.12, F - 3, w * 0.24, 3)
+        + chapa(cor, MEIO - w * 0.34, F - h, w * 0.68, h * 0.32, 2)
+        + peca("d-metal-furo", MEIO - w * 0.22, F - h + 2, w * 0.44, h * 0.32 - 5, 1.5)
+        + chapa(cor, MEIO - 1.5, F - h + 3, 3, h * 0.32 - 4)
+        + chapa(cor, MEIO - w / 2, F - h * 0.74, w, h * 0.74 - 4, w * 0.3)
+    );
+}
+
+
+/**
+ * P13, e o P8 no mesmo molde: o de cozinha. Largo, com a costura no
+ * meio, o aro vazado das duas alças em cima e o pé com recortes.
+ */
+function gasP13(d) {
+    return botijaoDe(d, false, (cor, w, h, F) => {
+        const corpoY = F - h * 0.78;
+        const corpoH = h * 0.78 - 5;
+        const aroH = h * 0.32;
+
+        return chapa(cor, MEIO - w * 0.38, F - 6, w * 0.76, 6, 1)
+            + peca("d-metal-furo", MEIO - w * 0.26, F - 3, w * 0.12, 3)
+            + peca("d-metal-furo", MEIO + w * 0.14, F - 3, w * 0.12, 3)
+            + chapa(cor, MEIO - w * 0.36, F - h, w * 0.72, aroH, 2.5)
+            + peca("d-metal-furo", MEIO - w * 0.3, F - h + 2.5, w * 0.2, h * 0.1, 1.5)
+            + peca("d-metal-furo", MEIO + w * 0.1, F - h + 2.5, w * 0.2, h * 0.1, 1.5)
+            + peca("d-metal-escuro", MEIO - 2, F - h + 2, 4, aroH - 3, 1)
+            + chapa(cor, MEIO - w / 2, corpoY, w, corpoH, w * 0.28)
+            + costura(w, corpoY + corpoH / 2);
+    });
+}
+
+
+/** P20: o de empilhadeira. Alto e fino, com a luva aberta em cima. */
+function gasP20(d) {
+    return botijaoDe(d, false, (cor, w, h, F) => {
+        const corpoY = F - h * 0.8;
+        const luvaH = h * 0.22;
+
+        return chapa(cor, MEIO - w * 0.46, F - 5, w * 0.92, 5)
+            + peca("d-metal-furo", MEIO - w * 0.15, F - 2.5, w * 0.3, 2.5)
+            + chapa(cor, MEIO - w / 2, corpoY, w, h * 0.8 - 4, 4)
+            + costura(w, corpoY + 6)
+            + chapa(cor, MEIO - w / 2, F - h, w, luvaH, 1)
+            + `<ellipse class="d-metal-furo" cx="${MEIO}" cy="${n(F - h + 1.8)}" rx="${n(w / 2 - 1.5)}" ry="1.8"/>`
+            + peca("d-metal-furo", MEIO - w / 2, F - h + 4, w * 0.3, h * 0.07);
+    });
+}
+
+
+/**
+ * P45: alto, cinza-chumbo, com o topo em cúpula e a válvula exposta,
+ * sem aro.
+ */
+function gasP45(d) {
+    return botijaoDe(d, true, (cor, w, h, F) => {
+        const cupulaY = F - h * 0.9;
+
+        return chapa(cor, MEIO - w * 0.46, F - 6, w * 0.92, 6, 1)
+            + chapa(cor, MEIO - 3, F - h + 3, 6, 8)
+            + chapa(cor, MEIO - w / 2, cupulaY, w, w, w / 2)
+            + chapa(cor, MEIO - w / 2, cupulaY + w / 2, w, F - 4 - (cupulaY + w / 2), 2)
+            + costura(w, cupulaY + h * 0.22)
+            + peca("d-metal-escuro", MEIO - 4, F - h + 2, 8, 4, 1)
+            + peca("d-metal-escuro", MEIO - 6, F - h, 12, 2, 1);
+    });
+}
+
+
+/**
+ * P90: o maior e o mais largo. Ombros redondos, costura no meio, uma
+ * luva pequena em volta da válvula e o pé largo com recortes.
+ */
+function gasP90(d) {
+    return botijaoDe(d, false, (cor, w, h, F) => {
+        const corpoY = F - h * 0.84;
+        const corpoH = F - 5 - corpoY;
+
+        return chapa(cor, MEIO - w * 0.42, F - 7, w * 0.84, 7, 1.5)
+            + peca("d-metal-furo", MEIO - w * 0.3, F - 3.5, w * 0.14, 3.5)
+            + peca("d-metal-furo", MEIO + w * 0.16, F - 3.5, w * 0.14, 3.5)
+            + chapa(cor, MEIO - w * 0.18, F - h + 3, w * 0.36, h * 0.13, 2)
+            + peca("d-metal-furo", MEIO - w * 0.12, F - h + 5, w * 0.24, h * 0.05, 1)
+            + chapa(cor, MEIO - w / 2, corpoY, w, corpoH, w * 0.3)
+            + costura(w, corpoY + corpoH / 2)
+            + peca("d-metal-escuro", MEIO - 2.5, F - h, 5, 4, 1);
+    });
 }
 
 
@@ -145,7 +307,7 @@ function fardo(d) {
 }
 
 
-const FORMAS = { botijao, galao, galaoAlca, fardo };
+const FORMAS = { gasP2, gasP5, gasP13, gasP20, gasP45, gasP90, galao, galaoAlca, fardo };
 
 /**
  * O desenho e os nomes de um item, ou null quando ainda não há desenho

@@ -403,13 +403,14 @@
 /* As peças dos desenhos. Em classe, e não em atributo: fill="var(...)"
    não funciona no SVG, e daqui as cores seguem as da marca. */
 .d-texto        { font-family: var(--titulo); font-weight: 700; }
-.d-gas-corpo    { fill: var(--gas); }
-.d-gas-escuro   { fill: #b9650b; }
-.d-furo         { fill: #fff; opacity: .6; }
-.d-brilho       { fill: #fff; opacity: .28; }
-/* Marinho, e não branco, em cima do laranja: branco nele não passa
-   de 2,5 de contraste, e o nome dentro é justamente o que se lê. */
-.d-texto-gas    { fill: var(--marinho); }
+/* Os botijões são prata, como os de verdade; a cor da marca fica só na
+   etiqueta vermelha da sigla, a mesma das tabelas de distribuidora. */
+.d-metal-escuro  { fill: #565c63; }
+.d-metal-furo    { fill: #3b4046; }
+.d-metal-costura { stroke: #6d737a; stroke-width: 1; opacity: .55; }
+.d-etiqueta      { fill: #a3161f; }
+.d-etiqueta-cunha { fill: #c62a33; }
+.d-texto-etiqueta { fill: #fff; }
 
 .d-agua-corpo   { fill: #d6ecff; stroke: var(--agua); stroke-width: 2; }
 .d-agua-garrafa { fill: #d6ecff; stroke: var(--agua); stroke-width: 1.5; }
