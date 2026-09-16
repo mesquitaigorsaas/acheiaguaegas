@@ -1,49 +1,56 @@
 // ==========================================
 // ACHEI ÁGUA & GÁS
 // Arquivo: desenhos.js
-// Versão: 1.0
+// Versão: 2.0
 // ==========================================
 
 /*
-   O desenho de cada item do catálogo, com o nome dentro.
+   A figura de cada item do catálogo, com o nome do dia a dia embaixo.
 
    Pouca gente sabe que o botijão da cozinha se chama P13. A pessoa
-   conhece pelo tamanho e pelo uso: "o de cozinha", "o grandão do
-   restaurante". O desenho em proporção, com o nome do dia a dia
-   embaixo, responde isso sem ninguém precisar perguntar.
+   conhece pelo tamanho e pelo formato: "o de cozinha", "o grandão do
+   restaurante". A figura responde isso sem ninguém precisar perguntar.
 
-   A chave é o apelido do catálogo. Item novo sem desenho aqui continua
+   A chave é o apelido do catálogo. Item novo sem figura aqui continua
    aparecendo, só que como texto: não quebra nada.
 
-   Tudo é SVG escrito à mão, sem imagem para baixar. No celular do
-   bairro, dez fotos de botijão seriam segundos a mais antes de a
-   pessoa conseguir tocar em alguma coisa.
+   OS BOTIJÕES SÃO FOTOS, e não desenho. Muita gente escolhe pela
+   imagem, e um desenho aproximado manda a pessoa pedir o botijão
+   errado. As fotos ficam em assets/botijoes/web, em cópias leves (os
+   originais ficam na pasta de cima, fora do site), e já trazem a
+   etiqueta vermelha com a sigla.
+
+   A ÁGUA CONTINUA EM SVG escrito à mão.
 */
 
-const DESENHOS = {
-    // GÁS
-    // Prateados, como na foto que a revenda e o cliente conhecem, cada
-    // modelo com o seu formato: é pelo formato que a pessoa reconhece o
-    // botijão, muito antes de ler a sigla. A sigla vai embaixo, na
-    // etiqueta vermelha, como nas tabelas das distribuidoras.
-    //
-    // As alturas seguem a ordem real (P2 < P5 < P13 < P20 < P45 < P90),
-    // mas comprimidas: na proporção exata o P2 viraria um ponto.
-    "P2":  { forma: "gasP2",  largura: 26, altura: 24, rotulo: "P2",  popular: "Camping e fogareiro", medida: "2 kg" },
-    "P5":  { forma: "gasP5",  largura: 30, altura: 32, rotulo: "P5",  popular: "Botijão pequeno", medida: "5 kg" },
-    "P8":  { forma: "gasP13", largura: 36, altura: 36, rotulo: "P8",  popular: "Botijão médio", medida: "8 kg" },
-    "P13": { forma: "gasP13", largura: 42, altura: 42, rotulo: "P13", popular: "Botijão de cozinha", medida: "13 kg" },
-    "P20": { forma: "gasP20", largura: 22, altura: 62, rotulo: "P20", popular: "Empilhadeira", medida: "20 kg" },
-    "P45": { forma: "gasP45", largura: 28, altura: 74, rotulo: "P45", popular: "Botijão grande", medida: "45 kg · comércio" },
-    "P90": { forma: "gasP90", largura: 50, altura: 78, rotulo: "P90", popular: "Botijão industrial", medida: "90 kg" },
+/*
+   As fotos foram feitas na mesma escala: a sigla tem a mesma altura em
+   todas. Por isso cada uma aparece com a altura dela vezes o mesmo
+   fator, e o P90 fica do tamanho que é perto do P2 — com as etiquetas
+   iguais lado a lado.
 
-    // ÁGUA
+   `alturaFoto` é a altura do arquivo original, em pixels.
+*/
+const ESCALA_FOTO = 0.17;
+
+const DESENHOS = {
+    // GÁS, na ordem de tamanho: é a ordem da tabela das distribuidoras,
+    // e a da tela. O P8 não tem foto e usa o desenho prateado.
+    "P2":  { foto: "p2",  alturaFoto: 299, tamanho: 1, popular: "Camping e fogareiro", medida: "2 kg" },
+    "P5":  { foto: "p5",  alturaFoto: 365, tamanho: 2, popular: "Botijão pequeno", medida: "5 kg" },
+    "P8":  { forma: "gasP13", largura: 26, altura: 34, rotulo: "P8", tamanho: 3, popular: "Botijão médio", medida: "8 kg" },
+    "P13": { foto: "p13", alturaFoto: 423, tamanho: 4, popular: "Botijão de cozinha", medida: "13 kg" },
+    "P20": { foto: "p20", alturaFoto: 551, tamanho: 5, popular: "Empilhadeira", medida: "20 kg" },
+    "P45": { foto: "p45", alturaFoto: 711, tamanho: 6, popular: "Botijão grande", medida: "45 kg · comércio" },
+    "P90": { foto: "p90", alturaFoto: 743, tamanho: 7, popular: "Botijão industrial", medida: "90 kg" },
+
+    // ÁGUA, também em ordem numérica, pelo tamanho da embalagem.
     // "Galão de água", sempre inteiro: "galão" sozinho não diz do quê.
-    "Galão de água 20L": { forma: "galao",     largura: 50, altura: 80, rotulo: "20L", popular: "Galão de água", medida: "20 litros" },
-    "Galão de água 10L": { forma: "galaoAlca", largura: 44, altura: 58, rotulo: "10L", popular: "Galão de água", medida: "10 litros" },
-    "Galão de água 5L":  { forma: "galaoAlca", largura: 36, altura: 46, rotulo: "5L",  popular: "Galão de água", medida: "5 litros" },
-    "Fardo 1,5L":  { forma: "fardo", garrafas: 3, largura: 16, altura: 60, rotulo: "1,5L",  popular: "Fardo de garrafas", medida: "6 × 1,5 litro" },
-    "Fardo 500ml": { forma: "fardo", garrafas: 4, largura: 12, altura: 42, rotulo: "500ml", popular: "Fardo de garrafinhas", medida: "12 × 500 ml" }
+    "Fardo 500ml": { forma: "fardo", garrafas: 4, largura: 12, altura: 42, rotulo: "500ml", tamanho: 1, popular: "Fardo de garrafinhas", medida: "12 × 500 ml" },
+    "Fardo 1,5L":  { forma: "fardo", garrafas: 3, largura: 16, altura: 60, rotulo: "1,5L",  tamanho: 2, popular: "Fardo de garrafas", medida: "6 × 1,5 litro" },
+    "Galão de água 5L":  { forma: "galaoAlca", largura: 36, altura: 46, rotulo: "5L",  tamanho: 3, popular: "Galão de água", medida: "5 litros" },
+    "Galão de água 10L": { forma: "galaoAlca", largura: 44, altura: 58, rotulo: "10L", tamanho: 4, popular: "Galão de água", medida: "10 litros" },
+    "Galão de água 20L": { forma: "galao",     largura: 50, altura: 80, rotulo: "20L", tamanho: 5, popular: "Galão de água", medida: "20 litros" }
 };
 
 // Todos os desenhos pisam no mesmo chão e dividem a mesma caixa: é o
@@ -59,15 +66,16 @@ function n(v) {
 
 
 /* ------------------------------------------
-   OS BOTIJÕES
+   O BOTIJÃO SEM FOTO
 
-   O botijão pisa mais alto que o galão: embaixo dele fica a etiqueta
-   vermelha com a sigla, e o pé do botijão encosta nela, como na
-   tabela das distribuidoras.
+   Hoje só o P8. Desenhado no estilo das fotos — prata, com a etiqueta
+   vermelha da sigla embaixo — para não destoar dos outros até a foto
+   dele chegar. Com a foto, ele entra no DESENHOS como os demais e
+   tudo isto pode sair.
 ------------------------------------------ */
 
 const CHAO_GAS = 80;
-const ETIQUETA_LARGURA = 34;
+const ETIQUETA_LARGURA = 28;
 
 /*
    O prateado é um degradê da esquerda para a direita: escuro nas
@@ -78,12 +86,9 @@ const ETIQUETA_LARGURA = 34;
 */
 let degradesCriados = 0;
 
-function metal(escuro) {
+function metal() {
     const id = "metal-" + (++degradesCriados);
-    // O P45 é o cinza-chumbo da foto; os outros, prata clara.
-    const tons = escuro
-        ? ["#4f555b", "#9aa0a6", "#dfe2e5", "#8c9298", "#4a5056"]
-        : ["#858b91", "#c9cdd1", "#f5f6f7", "#b4b9be", "#7a8086"];
+    const tons = ["#858b91", "#c9cdd1", "#f5f6f7", "#b4b9be", "#7a8086"];
     const paradas = [0, 0.28, 0.45, 0.72, 1];
 
     return {
@@ -113,8 +118,8 @@ function costura(w, y) {
  * Monta o SVG de um botijão: a cunha vermelha atrás do pé, o botijão
  * que `pecas` desenha, e a etiqueta com a sigla por cima de tudo.
  */
-function botijaoDe(d, escuro, pecas) {
-    const m = metal(escuro);
+function botijaoDe(d, pecas) {
+    const m = metal();
     const x = MEIO - ETIQUETA_LARGURA / 2;
     const F = CHAO_GAS;
 
@@ -123,42 +128,18 @@ function botijaoDe(d, escuro, pecas) {
             ${m.defs}
             <polygon class="d-etiqueta-cunha" points="${n(x)},${F} ${n(x + ETIQUETA_LARGURA)},${F - 16} ${n(x + ETIQUETA_LARGURA)},${F}"/>
             ${pecas(m.cor, d.largura, d.altura, F)}
-            <rect class="d-etiqueta" x="${n(x)}" y="${F}" width="${ETIQUETA_LARGURA}" height="14"/>
-            <text class="d-texto d-texto-etiqueta" x="${MEIO}" y="${F + 7.5}" font-size="10.5" text-anchor="middle" dominant-baseline="central">${esc(d.rotulo)}</text>
+            <rect class="d-etiqueta" x="${n(x)}" y="${F}" width="${ETIQUETA_LARGURA}" height="12"/>
+            <text class="d-texto d-texto-etiqueta" x="${MEIO}" y="${F + 6.5}" font-size="9" text-anchor="middle" dominant-baseline="central">${esc(d.rotulo)}</text>
         </svg>`;
 }
 
 
-/** P2: bojudo e baixinho, com a válvula à mostra e sem aro. */
-function gasP2(d) {
-    return botijaoDe(d, false, (cor, w, h, F) =>
-        peca("d-metal-escuro", MEIO - w * 0.32, F - 3, w * 0.64, 3, 1)
-        + chapa(cor, MEIO - 3, F - h + 1.5, 6, h * 0.26)
-        + chapa(cor, MEIO - w / 2, F - h * 0.8, w, h * 0.8 - 2, w * 0.42)
-        + peca("d-metal-escuro", MEIO - 4.5, F - h, 9, 2.5, 1)
-    );
-}
-
-
-/** P5: corpo curto, aro baixo em cima e pé com recorte. */
-function gasP5(d) {
-    return botijaoDe(d, false, (cor, w, h, F) =>
-        chapa(cor, MEIO - w * 0.36, F - 5, w * 0.72, 5, 1)
-        + peca("d-metal-furo", MEIO - w * 0.12, F - 3, w * 0.24, 3)
-        + chapa(cor, MEIO - w * 0.34, F - h, w * 0.68, h * 0.32, 2)
-        + peca("d-metal-furo", MEIO - w * 0.22, F - h + 2, w * 0.44, h * 0.32 - 5, 1.5)
-        + chapa(cor, MEIO - 1.5, F - h + 3, 3, h * 0.32 - 4)
-        + chapa(cor, MEIO - w / 2, F - h * 0.74, w, h * 0.74 - 4, w * 0.3)
-    );
-}
-
-
 /**
- * P13, e o P8 no mesmo molde: o de cozinha. Largo, com a costura no
+ * No molde do P13, que é o que o P8 parece: largo, com a costura no
  * meio, o aro vazado das duas alças em cima e o pé com recortes.
  */
 function gasP13(d) {
-    return botijaoDe(d, false, (cor, w, h, F) => {
+    return botijaoDe(d, (cor, w, h, F) => {
         const corpoY = F - h * 0.78;
         const corpoH = h * 0.78 - 5;
         const aroH = h * 0.32;
@@ -172,63 +153,6 @@ function gasP13(d) {
             + peca("d-metal-escuro", MEIO - 2, F - h + 2, 4, aroH - 3, 1)
             + chapa(cor, MEIO - w / 2, corpoY, w, corpoH, w * 0.28)
             + costura(w, corpoY + corpoH / 2);
-    });
-}
-
-
-/** P20: o de empilhadeira. Alto e fino, com a luva aberta em cima. */
-function gasP20(d) {
-    return botijaoDe(d, false, (cor, w, h, F) => {
-        const corpoY = F - h * 0.8;
-        const luvaH = h * 0.22;
-
-        return chapa(cor, MEIO - w * 0.46, F - 5, w * 0.92, 5)
-            + peca("d-metal-furo", MEIO - w * 0.15, F - 2.5, w * 0.3, 2.5)
-            + chapa(cor, MEIO - w / 2, corpoY, w, h * 0.8 - 4, 4)
-            + costura(w, corpoY + 6)
-            + chapa(cor, MEIO - w / 2, F - h, w, luvaH, 1)
-            + `<ellipse class="d-metal-furo" cx="${MEIO}" cy="${n(F - h + 1.8)}" rx="${n(w / 2 - 1.5)}" ry="1.8"/>`
-            + peca("d-metal-furo", MEIO - w / 2, F - h + 4, w * 0.3, h * 0.07);
-    });
-}
-
-
-/**
- * P45: alto, cinza-chumbo, com o topo em cúpula e a válvula exposta,
- * sem aro.
- */
-function gasP45(d) {
-    return botijaoDe(d, true, (cor, w, h, F) => {
-        const cupulaY = F - h * 0.9;
-
-        return chapa(cor, MEIO - w * 0.46, F - 6, w * 0.92, 6, 1)
-            + chapa(cor, MEIO - 3, F - h + 3, 6, 8)
-            + chapa(cor, MEIO - w / 2, cupulaY, w, w, w / 2)
-            + chapa(cor, MEIO - w / 2, cupulaY + w / 2, w, F - 4 - (cupulaY + w / 2), 2)
-            + costura(w, cupulaY + h * 0.22)
-            + peca("d-metal-escuro", MEIO - 4, F - h + 2, 8, 4, 1)
-            + peca("d-metal-escuro", MEIO - 6, F - h, 12, 2, 1);
-    });
-}
-
-
-/**
- * P90: o maior e o mais largo. Ombros redondos, costura no meio, uma
- * luva pequena em volta da válvula e o pé largo com recortes.
- */
-function gasP90(d) {
-    return botijaoDe(d, false, (cor, w, h, F) => {
-        const corpoY = F - h * 0.84;
-        const corpoH = F - 5 - corpoY;
-
-        return chapa(cor, MEIO - w * 0.42, F - 7, w * 0.84, 7, 1.5)
-            + peca("d-metal-furo", MEIO - w * 0.3, F - 3.5, w * 0.14, 3.5)
-            + peca("d-metal-furo", MEIO + w * 0.16, F - 3.5, w * 0.14, 3.5)
-            + chapa(cor, MEIO - w * 0.18, F - h + 3, w * 0.36, h * 0.13, 2)
-            + peca("d-metal-furo", MEIO - w * 0.12, F - h + 5, w * 0.24, h * 0.05, 1)
-            + chapa(cor, MEIO - w / 2, corpoY, w, corpoH, w * 0.3)
-            + costura(w, corpoY + corpoH / 2)
-            + peca("d-metal-escuro", MEIO - 2.5, F - h, 5, 4, 1);
     });
 }
 
@@ -307,15 +231,39 @@ function fardo(d) {
 }
 
 
-const FORMAS = { gasP2, gasP5, gasP13, gasP20, gasP45, gasP90, galao, galaoAlca, fardo };
+const FORMAS = { gasP13, galao, galaoAlca, fardo };
+
+/** A foto de um botijão, na altura que a escala comum dá a ela. */
+function foto(d) {
+    const altura = Math.round(d.alturaFoto * ESCALA_FOTO);
+    return `<img class="item-foto" src="assets/botijoes/web/${esc(d.foto)}.png" alt=""
+                 style="--altura: ${altura}" decoding="async">`;
+}
 
 /**
- * O desenho e os nomes de um item, ou null quando ainda não há desenho
+ * A figura e os nomes de um item, ou null quando ainda não há figura
  * para ele — aí a tela mostra o apelido em texto, como antes.
  */
 function desenhoDoItem(item) {
     const d = DESENHOS[item.apelido];
-    if (!d || !FORMAS[d.forma]) return null;
+    if (!d) return null;
 
-    return { svg: FORMAS[d.forma](d), popular: d.popular, medida: d.medida };
+    if (d.foto) return { figura: foto(d), popular: d.popular, medida: d.medida, foto: true };
+    if (!FORMAS[d.forma]) return null;
+
+    return { figura: FORMAS[d.forma](d), popular: d.popular, medida: d.medida, foto: false };
+}
+
+/**
+ * Os itens em ordem numérica, do menor para o maior: P2, P5, P8, P13,
+ * P20, P45, P90. É a ordem da tabela das distribuidoras, e é como a
+ * pessoa compara: o do lado é maior ou menor que o meu? Quem não tem
+ * figura mantém a ordem do catálogo, depois dos outros.
+ *
+ * O banco guarda a mesma ordem (008-p20-p90.sql), para o painel da
+ * revenda listar igual; esta aqui vale mesmo antes de ele rodar.
+ */
+function ordenarPorTamanho(itens) {
+    const tamanho = (i) => (DESENHOS[i.apelido] && DESENHOS[i.apelido].tamanho) || Infinity;
+    return [...itens].sort((a, b) => tamanho(a) - tamanho(b));
 }

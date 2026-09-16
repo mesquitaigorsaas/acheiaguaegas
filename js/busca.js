@@ -471,8 +471,7 @@ function abrirTipo(tipo) {
     const itens = document.getElementById("itens");
     itens.classList.add("itens-desenho");
 
-    itens.innerHTML = catalogo
-        .filter((i) => i.tipo === tipo)
+    itens.innerHTML = ordenarPorTamanho(catalogo.filter((i) => i.tipo === tipo))
         .map((i) => {
             const escolhido = noPedido(i.id) ? " escolhido" : "";
             const desenho = desenhoDoItem(i);
@@ -490,7 +489,7 @@ function abrirTipo(tipo) {
                 <button type="button" class="item-botao item-desenho${escolhido}" data-item="${esc(i.id)}"
                         data-familia="${esc(i.tipo)}" aria-pressed="${escolhido ? "true" : "false"}"
                         aria-label="${esc(i.nome)}, ${esc(desenho.popular)}">
-                    ${desenho.svg}
+                    <span class="item-figura${desenho.foto ? " com-foto" : ""}">${desenho.figura}</span>
                     <span class="item-popular">${esc(desenho.popular)}</span>
                     <span class="item-medida">${esc(desenho.medida)}</span>
                 </button>`;

@@ -6,3 +6,7 @@ desktop.ini
 
 # Cópia montada na hora de publicar. Sai inteira do que já está versionado.
 dist/
+
+# Os originais das fotos dos botijões. O site usa as cópias leves de
+# assets/botijoes/web, feitas a partir deles.
+assets/botijoes/*.png

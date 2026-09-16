@@ -341,14 +341,12 @@
 
 /* Os itens desenhados. Cartão, e não pílula: o desenho precisa de
    altura, e o nome do dia a dia embaixo não cabe numa linha só. */
+/* Quantas colunas couberem: os botijões são sete, e numa tela larga
+   ficam todos numa linha, do menor para o maior, como na tabela. */
 .itens-desenho {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 10px;
-}
-
-@media (max-width: 560px) {
-    .itens-desenho { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    grid-template-columns: repeat(auto-fit, minmax(76px, 1fr));
+    gap: 8px;
 }
 
 .item-desenho {
@@ -361,12 +359,48 @@
     text-align: center;
 }
 
-.item-desenho svg {
+.item-figura {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 4px;
+}
+
+.item-figura svg {
     display: block;
     width: 100%;
     max-width: 84px;
     height: auto;
-    margin-bottom: 4px;
+}
+
+/* Os botijões pisam todos no mesmo chão, numa caixa da altura do
+   maior: é o que deixa o P90 do tamanho que é perto do P2. A altura de
+   cada foto vem dela (--altura), na mesma escala para todas. */
+.item-desenho[data-familia="gas"] .item-figura { height: 126px; }
+
+.item-foto {
+    display: block;
+    width: auto;
+    height: calc(var(--altura) * 1px);
+}
+
+/* O botijão ainda sem foto, na escala das fotos: o desenho ocupa só a
+   metade de baixo da caixa dele, e com esta altura fica entre o P5 e o
+   P13, com a etiqueta do tamanho das outras. O vazio de cima pode
+   passar da caixa sem aparecer. */
+.item-desenho[data-familia="gas"] .item-figura svg {
+    flex: none;
+    width: auto;
+    max-width: none;
+    height: 129px;
+}
+
+/* No celular tudo encolhe junto, e a proporção entre eles não muda. */
+@media (max-width: 560px) {
+    .item-desenho[data-familia="gas"] .item-figura { height: 101px; }
+    .item-desenho[data-familia="gas"] .item-figura svg { height: 103px; }
+    .item-foto { height: calc(var(--altura) * .8px); }
 }
 
 .item-popular {
