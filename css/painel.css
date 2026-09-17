@@ -227,6 +227,43 @@ body.tela-painel { background: var(--fundo); }
 
 .tem-hoje input { width: 20px; height: 20px; accent-color: var(--verde); }
 
+/* TAMBÉM VENDO — marcações em grade, que o polegar acerta. */
+.grupo-extras {
+    margin: 14px 0 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--tinta-fraca);
+    text-transform: uppercase;
+    letter-spacing: .3px;
+}
+
+.lista-extras {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px;
+}
+
+.marca-extra {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 48px;
+    padding: 8px 12px;
+    border: 1.5px solid var(--linha);
+    border-radius: var(--raio);
+    background: var(--papel);
+    font-size: 14.5px;
+    cursor: pointer;
+}
+
+.marca-extra input { width: 20px; height: 20px; flex: none; accent-color: var(--verde); }
+
+.marca-extra:has(input:checked) {
+    border-color: var(--verde);
+    background: var(--verde-claro);
+    font-weight: 600;
+}
+
 @media (max-width: 560px) {
     .linha-preco {
         grid-template-columns: 1fr auto;

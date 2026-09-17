@@ -60,6 +60,9 @@ const estado = {
     modo: "entrega",  // "entrega" ou "retirada"
     ordem: "distancia", // "distancia" ou "preco"
     quantidades: {},  // quantos de cada item marcado: { id: 2 }
+    // O que mais a pessoa quer perguntar (chaves de js/extras.js). Não
+    // entra no total nem na ordem: vai na mensagem, preço a consultar.
+    extras: [],
     pagamento: null,  // "pix", "debito", "credito" ou "dinheiro"
     // Vem DESMARCADO: a lista mostra todo mundo, e o horário é
     // informação, não corte. Quem quiser ver só quem atende agora
@@ -599,6 +602,38 @@ function desenharPedido() {
 }
 
 
+/* ------------------------------------------
+   O que mais a pessoa quer perguntar
+------------------------------------------ */
+
+function desenharExtrasDoPedido() {
+    const marcados = new Set(estado.extras);
+
+    document.getElementById("chips-extras").innerHTML = EXTRAS.map((e) => `
+        <button type="button" class="chip-extra${marcados.has(e.id) ? " escolhido" : ""}"
+                data-extra-pedido="${esc(e.id)}" aria-pressed="${marcados.has(e.id)}">
+            ${esc(e.nome)}${seloMaiores(e)}
+        </button>`).join("");
+
+    // Aberto enquanto houver algo marcado: fechar esconderia da pessoa
+    // o que vai na mensagem.
+    if (estado.extras.length) document.getElementById("extras-pedido").open = true;
+}
+
+function alternarExtra(id) {
+    if (!extraPorId(id)) return;
+
+    estado.extras = estado.extras.includes(id)
+        ? estado.extras.filter((x) => x !== id)
+        : [...estado.extras, id];
+
+    desenharExtrasDoPedido();
+
+    // Não vai ao banco: a busca já trouxe o que cada revenda vende.
+    if (!document.getElementById("resultados").hidden) desenharLista();
+}
+
+
 /**
  * Entregar ou buscar. Refaz a busca, e não filtra o que já veio: quem
  * só atende no balcão nem foi trazida na busca de entrega, e o raio de
@@ -903,6 +938,8 @@ function cartao(r, pedidos, menorTotal) {
                 ? `<p class="endereco-revenda"><span>Endereço:</span> ${esc(r.endereco)}</p>`
                 : ""}
 
+            ${tambemVende(r)}
+
             <div class="acao-revenda">
                 <a class="botao botao-zap" href="https://wa.me/${esc(zap)}"
                    data-zap="${esc(zap)}" data-revenda="${esc(r.revenda_id)}"
@@ -912,6 +949,27 @@ function cartao(r, pedidos, menorTotal) {
             </div>
         </article>
     `;
+}
+
+
+/**
+ * "Também vende: carvão · gelo", preço a consultar. O que a pessoa
+ * marcou para perguntar vem destacado, e primeiro: é o que ela procura
+ * neste cartão.
+ */
+function tambemVende(r) {
+    const vende = extrasDe(r.extras);
+    if (!vende.length) return "";
+
+    const quer = new Set(estado.extras);
+    const emOrdem = [...vende.filter((e) => quer.has(e.id)), ...vende.filter((e) => !quer.has(e.id))];
+
+    return `
+        <p class="tambem-vende">
+            <span>Também vende</span>
+            ${emOrdem.map((e) => `<em class="${quer.has(e.id) ? "quer" : ""}">${esc(e.curto)}${seloMaiores(e)}</em>`).join("")}
+            <small>preço a consultar</small>
+        </p>`;
 }
 
 
@@ -1065,6 +1123,14 @@ function mensagemDoPedido(r) {
         ""
     ];
 
+    // Só o que ELA vende, pelo mesmo motivo dos itens: perguntar preço
+    // de algo que a revenda não tem começa a conversa com um "não".
+    const vende = new Set(r.extras || []);
+    const perguntar = EXTRAS.filter((e) => estado.extras.includes(e.id) && vende.has(e.id));
+    if (perguntar.length) {
+        linhas.push("*Quanto custa:* " + emLista(perguntar.map((e) => e.curto)) + "?", "");
+    }
+
     linhas.push(entrega
         ? "*Entrega:* " + (taxa > 0 ? dinheiro(taxa) : "grátis")
         : "*Retirada:* vou buscar no balcão");
@@ -1102,6 +1168,7 @@ function lerTroco() {
 
 (async function iniciar() {
     opcoesDeEstado(document.getElementById("uf"), "", true);
+    desenharExtrasDoPedido();
 
     document.getElementById("form-endereco").addEventListener("submit", usarEndereco);
     document.getElementById("rua").addEventListener("input", aoDigitarRua);
@@ -1156,6 +1223,9 @@ function lerTroco() {
 
         const pagamento = evento.target.closest("[data-pagamento]");
         if (pagamento) { escolherPagamento(pagamento.dataset.pagamento); return; }
+
+        const extra = evento.target.closest("[data-extra-pedido]");
+        if (extra) { alternarExtra(extra.dataset.extraPedido); return; }
 
         const menos = evento.target.closest("[data-menos]");
         if (menos) { mudarQuantidade(menos.dataset.menos, -1); return; }

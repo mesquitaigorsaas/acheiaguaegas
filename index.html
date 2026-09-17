@@ -150,6 +150,21 @@
 
                 <div class="meu-pedido" id="meu-pedido" hidden></div>
 
+                <!-- O que mais a pessoa quer perguntar. Fechado de início:
+                     é o extra, e não pode empurrar para baixo o que
+                     importa. Não entra no total nem na ordem da lista:
+                     vai na mensagem, com o preço a consultar. -->
+                <details class="extras-pedido" id="extras-pedido">
+                    <summary>
+                        Precisa de mais alguma coisa?
+                        <small>Carvão, gelo, mangueira, bomba para galão...</small>
+                    </summary>
+                    <p class="dica-extras">
+                        Marque, e a gente pergunta o preço para a revenda junto com o pedido.
+                    </p>
+                    <div class="chips-extras" id="chips-extras"></div>
+                </details>
+
                 <!-- Como a pessoa quer receber. Muda a lista inteira: na
                      retirada entram as que só atendem no balcão, e o raio
                      de entrega delas deixa de valer. -->
@@ -234,6 +249,7 @@
     <script src="js/onde.js"></script>
     <script src="js/banco.js"></script>
     <script src="js/estados.js"></script>
+    <script src="js/extras.js"></script>
     <script src="js/desenhos.js"></script>
     <script src="js/busca.js"></script>
 

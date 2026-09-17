@@ -416,6 +416,84 @@
     color: var(--tinta-fraca);
 }
 
+/* PRECISA DE MAIS ALGUMA COISA? Fechado de início, e discreto: é o
+   extra, e não pode disputar com o botijão. */
+.extras-pedido {
+    margin: 14px 0 4px;
+    border: 1px dashed var(--linha);
+    border-radius: var(--raio);
+    padding: 10px 14px;
+    background: var(--fundo);
+}
+
+.extras-pedido summary {
+    cursor: pointer;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--marinho);
+}
+
+.extras-pedido summary small {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 400;
+    color: var(--tinta-fraca);
+}
+
+.dica-extras { margin: 8px 0; font-size: 13px; color: var(--tinta-fraca); }
+
+.chips-extras { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.chip-extra {
+    min-height: 38px;
+    padding: 6px 12px;
+    border: 1.5px solid var(--linha);
+    border-radius: 999px;
+    background: var(--papel);
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.chip-extra.escolhido {
+    border-color: var(--agua-escura);
+    background: var(--agua-clara);
+    color: var(--marinho);
+    font-weight: 700;
+}
+
+/* "Também vende", no cartão da revenda, na largura toda. */
+.tambem-vende {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    color: var(--tinta-fraca);
+}
+
+.tambem-vende span { font-weight: 600; color: var(--marinho); margin-right: 2px; }
+
+.tambem-vende em {
+    font-style: normal;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--fundo);
+    border: 1px solid var(--linha);
+    color: var(--tinta);
+}
+
+/* O que a pessoa marcou para perguntar, em destaque. */
+.tambem-vende em.quer {
+    background: var(--verde-claro);
+    border-color: #a7d8b9;
+    color: var(--verde);
+    font-weight: 700;
+}
+
+.tambem-vende small { font-size: 12px; }
+
 /* O endereço da revenda, na largura toda do cartão, logo acima do
    botão do WhatsApp. */
 .endereco-revenda {

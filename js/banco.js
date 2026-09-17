@@ -153,6 +153,7 @@ async function buscarNaDemonstracao(lat, lng, idsDosItens, modo, raioMax) {
                 faz_retirada: r.faz_retirada,
                 taxa_entrega: r.taxa_entrega || 0,
                 pagamentos: r.pagamentos || ["pix", "debito", "credito", "dinheiro"],
+                extras: r.extras || [],
                 itens_encontrados: achados,
                 total: Math.round(total * 100) / 100,
                 precos: precos

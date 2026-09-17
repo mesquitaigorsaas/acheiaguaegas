@@ -222,11 +222,42 @@ function telaPrecos() {
             <h3 class="titulo-tipo">💧 Água</h3>
             ${porTipo("agua")}
 
+            ${telaExtras()}
+
             <div class="barra-salvar">
-                <button type="button" class="botao" data-salvar="precos">Salvar preços</button>
+                <button type="button" class="botao" data-salvar="precos">Salvar</button>
             </div>
         </section>
     `;
+}
+
+
+/**
+ * O que a revenda vende além do catálogo, só marcando. Fica na mesma
+ * aba dos preços, e salva no mesmo botão: é a mesma pergunta, "o que
+ * você vende", e dois botões de salvar na mesma tela fazem a pessoa
+ * apertar um e perder o que marcou no outro.
+ */
+function telaExtras() {
+    const marcados = new Set(revenda.extras || []);
+
+    const grupos = GRUPOS_EXTRAS.map((grupo) => `
+        <p class="grupo-extras">${esc(grupo)}</p>
+        <div class="lista-extras">
+            ${EXTRAS.filter((e) => e.grupo === grupo).map((e) => `
+                <label class="marca-extra">
+                    <input type="checkbox" data-extra="${esc(e.id)}" ${marcados.has(e.id) ? "checked" : ""}>
+                    <span>${esc(e.nome)}${seloMaiores(e)}</span>
+                </label>`).join("")}
+        </div>`).join("");
+
+    return `
+        <h3 class="titulo-tipo">🛒 Também vendo</h3>
+        <p class="explica">
+            Marque o que mais você vende. Aparece no seu cartão na busca como
+            "também vende", com preço a consultar: o cliente pergunta no WhatsApp.
+        </p>
+        ${grupos}`;
 }
 
 
@@ -304,18 +335,29 @@ async function salvarPrecos() {
             if (error) throw error;
         }
 
+        // O "também vendo" só vai ao banco quando mudou.
+        const extras = EXTRAS
+            .filter((e) => document.querySelector(`[data-extra="${e.id}"]`)?.checked)
+            .map((e) => e.id);
+        const antes = (revenda.extras || []).slice().sort().join(",");
+        if (extras.slice().sort().join(",") !== antes) {
+            const { error } = await banco.from("revendas").update({ extras }).eq("id", revenda.id);
+            if (error) throw error;
+            revenda.extras = extras;
+        }
+
         const { data, error } = await banco.from("precos")
             .select("id, item_id, preco, disponivel, atualizado_em");
         if (error) throw error;
 
         precos = data;
-        avisar("Preços salvos.");
+        avisar("Salvo.");
         abrirAba("precos");
     } catch (erro) {
         console.error("Erro ao salvar preços:", erro);
-        avisar("Não consegui salvar os preços. Tente de novo.", "erro");
+        avisar("Não consegui salvar. Tente de novo.", "erro");
         botao.disabled = false;
-        botao.textContent = "Salvar preços";
+        botao.textContent = "Salvar";
     }
 }
 

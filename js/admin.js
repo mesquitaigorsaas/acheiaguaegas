@@ -253,6 +253,10 @@ function cartao(r) {
                 · cadastrou em ${esc(dataEscrita(r.criado_em))}
             </p>
 
+            ${(r.extras || []).length
+                ? `<p class="linha">Também vende: ${extrasDe(r.extras).map((e) => esc(e.curto) + seloMaiores(e)).join(", ")}</p>`
+                : ""}
+
             ${acoesDaSituacao(r)}
 
             <div class="grupo-botoes">

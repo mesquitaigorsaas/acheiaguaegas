@@ -191,6 +191,22 @@ body {
 }
 
 
+/* O aviso de venda proibida para menores, ao lado da cerveja, em
+   toda tela onde ela aparece. */
+.selo-18 {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 0 5px;
+    border-radius: 4px;
+    background: var(--vermelho);
+    color: #fff;
+    font-size: 10.5px;
+    font-weight: 700;
+    line-height: 16px;
+    vertical-align: middle;
+}
+
+
 /* ==========================================
    RECADOS
 ========================================== */
