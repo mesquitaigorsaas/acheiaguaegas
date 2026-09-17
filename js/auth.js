@@ -54,9 +54,13 @@ async function entrar(email, senha) {
 
     const situacao = await situacaoDaConta(data.user.id);
 
-    if (!situacao.ok) {
-        // Conta válida em revenda bloqueada não pode ficar com sessão
-        // aberta: na próxima página ela entraria sem passar por aqui.
+    // Conta válida em revenda bloqueada não fica com sessão aberta.
+    //
+    // A exceção é quem só falta pagar: a cobrança sai em nome de quem
+    // está logado, e sem sessão não teria como pagar. Isso não abre o
+    // painel — exigirLogin() confere a situação de novo em cada página
+    // — e a assinatura só muda pelo pagamento, conferido no banco.
+    if (!situacao.ok && !situacao.podePagar) {
         await banco.auth.signOut();
     }
 
@@ -140,29 +144,52 @@ async function situacaoDaConta(idDeAuth) {
 
     const revenda = usuario.revendas;
 
-    // A revenda vai junto nas duas respostas abaixo: é com o nome, o
-    // CNPJ e o id dela que a tela monta o Pix e a mensagem do comprovante.
+    // A revenda vai junto nas respostas abaixo: a tela de pagar mostra
+    // o nome dela, e o recado de bloqueio também.
     const paraPagar = { id: revenda.id, nome: revenda.nome, cnpj: revenda.cnpj };
+
+    // A madrugada tira do ar quem venceu. Entre a meia-noite e essa
+    // hora, a coluna ainda diz "ativa" — e o painel não pode abrir para
+    // quem já passou do prazo.
+    const vencida = revenda.assinatura_status === "vencida"
+        || (revenda.assinatura_status === "ativa"
+            && revenda.assinatura_vencimento
+            && revenda.assinatura_vencimento < hojeNoBrasil());
 
     if (revenda.assinatura_status === "aguardando_pagamento") {
         return {
             ok: false,
-            aguardandoPagamento: true,
+            podePagar: true,
             revenda: paraPagar,
-            mensagem: "Falta ativar a sua revenda. Pague a assinatura abaixo e mande o comprovante: assim que a gente conferir, o acesso abre."
+            mensagem: "Falta ativar a sua revenda. Pague a assinatura abaixo: assim que o pagamento for aprovado, o acesso abre."
+        };
+    }
+
+    if (vencida) {
+        return {
+            ok: false,
+            podePagar: true,
+            revenda: paraPagar,
+            mensagem: "A assinatura da sua revenda venceu, e ela saiu da busca. Renove abaixo para voltar na hora."
         };
     }
 
     if (revenda.assinatura_status !== "ativa") {
         return {
             ok: false,
-            suspensa: true,
+            bloqueada: true,
             revenda: paraPagar,
-            mensagem: "O acesso desta revenda está suspenso. Pague a assinatura abaixo para voltar a aparecer na busca."
+            mensagem: "O acesso desta revenda está bloqueado."
         };
     }
 
     return { ok: true, usuario, revenda };
+}
+
+
+/** O dia de hoje em Brasília, no formato da coluna: "2026-09-17". */
+function hojeNoBrasil() {
+    return new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
 }
 
 
@@ -190,7 +217,9 @@ async function exigirLogin() {
     const situacao = await situacaoDaConta(data.session.user.id);
 
     if (!situacao.ok) {
-        await banco.auth.signOut();
+        // Quem só falta pagar continua logado: a tela de entrar abre
+        // direto no pagamento, sem pedir a senha de novo.
+        if (!situacao.podePagar) await banco.auth.signOut();
         // O motivo viaja na URL para a tela de login poder explicar.
         location.href = ONDE_ENTRAR + "?motivo=" + encodeURIComponent(situacao.mensagem);
         return null;

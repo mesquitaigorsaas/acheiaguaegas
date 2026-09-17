@@ -1,7 +1,7 @@
 // ==========================================
 // ACHEI ÁGUA & GÁS
 // Arquivo: planos.js
-// Versão: 1.0
+// Versão: 2.0
 // ==========================================
 
 /*
@@ -10,9 +10,10 @@
    R$ 9,90 por mês, ou R$ 99,00 por ano. O anual sai por dez meses:
    dois de graça para quem paga adiantado.
 
-   O preço daqui vai no QR Code do Pix. Mexer nele pelo navegador não
-   libera nada: quem ativa a revenda é a gente, depois de conferir o
-   comprovante e o valor que caiu na conta.
+   Os valores daqui só desenham a tela. Quem cobra é a Edge Function
+   pagar-assinatura, com a tabela dela: mexer nestes números pelo
+   navegador não muda um centavo do que é cobrado. Mudou o preço? Mude
+   nos dois lugares.
 
    Por que tão barato: o produto novo não tem revenda cadastrada, e
    revenda sem revenda vizinha não vale nada para o cliente. Os
@@ -27,6 +28,7 @@ const PLANOS = {
         nome: "Plano Anual",
         valor: "R$ 99,00 por ano",
         preco: 99,
+        prazo: "12 meses",
         resumo: "Dois meses de graça em relação ao mensal."
     },
 
@@ -34,30 +36,20 @@ const PLANOS = {
         nome: "Plano Mensal",
         valor: "R$ 9,90 por mês",
         preco: 9.9,
-        resumo: "Sem fidelidade. Cancele quando quiser."
+        prazo: "1 mês",
+        resumo: "Sem fidelidade. Renove quando quiser."
     }
-};
-
-
-/*
-   O Pix que recebe as assinaturas, num lugar só.
-
-   A chave pode ficar à vista: é para isso que ela existe. Aleatória, e
-   não CPF nem telefone, para não expor documento de ninguém.
-
-   Enquanto a chave, o recebedor ou o WhatsApp estiverem vazios, a tela
-   de pagamento avisa que o Pix está sendo configurado, em vez de mostrar
-   um QR Code que não paga ninguém.
-*/
-const PIX = {
-    chave: "2e65ca21-3eac-409c-8a65-282eef7897a1",   // a chave aleatória, como o banco mostra
-    recebedor: "Igor Vinicius M Costa",   // o nome do titular da conta, até 25 letras
-    whatsapp: "31999347032"               // DDD + número que recebe os comprovantes
 };
 
 // O plano em destaque. O anual é melhor para os dois lados: o dono
 // economiza dois meses e a gente cobra uma vez em vez de doze.
 const PLANO_PADRAO = "anual";
+
+
+// Para onde mandar quem estiver com a revenda bloqueada.
+const SUPORTE = {
+    whatsapp: "31999347032"
+};
 
 
 function planoOu(nome) {

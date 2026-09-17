@@ -323,7 +323,7 @@ async function aoCadastrar(evento) {
         return;
     }
 
-    mostrarPronto(dados, data && data.revenda_id);
+    await mostrarPronto(dados);
 }
 
 
@@ -347,21 +347,32 @@ async function mensagemDoErro(error, data) {
 }
 
 
-function mostrarPronto(dados, revendaId) {
+async function mostrarPronto(dados) {
     avisar("");
     document.getElementById("form-cadastro").hidden = true;
 
     document.getElementById("resumo-pronto").textContent =
         dados.nome + " está cadastrada. Entre com " + dados.email + ".";
 
-    // O Pix aparece aqui mesmo, antes do botão de entrar: quem acabou de
-    // criar a conta ainda está com o celular na mão. Quem sair sem pagar
-    // encontra a mesma caixa ao entrar, pelo entrar.html.
-    desenharPagamento(document.getElementById("pagar-cadastro"), {
-        id: revendaId,
-        nome: dados.nome,
-        cnpj: dados.cnpj
+    // O Pix sai em nome de quem está logado, então a conta que
+    // acabou de nascer já entra aqui, com a senha que a pessoa digitou.
+    // Se não der, a mesma caixa aparece ao entrar, pelo entrar.html.
+    const { error } = await conectar().auth.signInWithPassword({
+        email: dados.email,
+        password: dados.senha
     });
+
+    // O pagamento aparece aqui mesmo, antes do botão de entrar: quem
+    // acabou de criar a conta ainda está com o celular na mão.
+    if (!error) {
+        desenharPagamento(document.getElementById("pagar-cadastro"), {
+            aoPagar: () => {
+                document.getElementById("depois-de-pagar").textContent =
+                    "Agora entre no painel e preencha o que faz a sua revenda aparecer na busca: "
+                    + "o horário, se você entrega ou atende no balcão, até onde entrega, e o preço de cada item.";
+            }
+        });
+    }
 
     document.getElementById("bloco-pronto").hidden = false;
     window.scrollTo({ top: 0, behavior: "smooth" });

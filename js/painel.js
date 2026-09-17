@@ -124,20 +124,75 @@ async function carregarTudo() {
    não aparece em resultado nenhum.
 ========================================== */
 
+// A partir de quantos dias antes do vencimento o cartão fica amarelo.
+const AVISAR_ANTES_DIAS = 7;
+
 function desenharAssinatura() {
     const cartao = document.getElementById("cartao-no-ar");
     const titulo = document.getElementById("titulo-no-ar");
     const explica = document.getElementById("explica-no-ar");
 
     cartao.hidden = false;
-    cartao.className = "cartao-no-ar sim";
-
-    titulo.textContent = "Assinatura em dia";
 
     const vence = revenda.assinatura_vencimento;
-    explica.textContent = vence
-        ? "A sua revenda aparece na busca. Próximo pagamento em " + dataEscrita(vence) + "."
-        : "A sua revenda aparece na busca.";
+    const faltam = vence ? diasAte(vence) : null;
+    const plano = planoOu(revenda.plano);
+
+    if (faltam !== null && faltam <= AVISAR_ANTES_DIAS) {
+        cartao.className = "cartao-no-ar perto";
+        titulo.textContent = faltam === 0 ? "A assinatura vence hoje"
+            : faltam === 1 ? "A assinatura vence amanhã"
+            : "A assinatura vence em " + faltam + " dias";
+        explica.textContent = "Renove até " + dataEscrita(vence)
+            + " para a revenda continuar na busca. O prazo novo conta a partir desse dia.";
+    } else {
+        cartao.className = "cartao-no-ar sim";
+        titulo.textContent = "Assinatura em dia";
+        explica.textContent = vence
+            ? plano.nome + ". A sua revenda aparece na busca até " + dataEscrita(vence) + "."
+            : "A sua revenda aparece na busca.";
+    }
+}
+
+/** Quantos dias faltam até a data, contando no fuso de Brasília. */
+function diasAte(iso) {
+    const hoje = new Date(hojeNoBrasil() + "T00:00:00Z");
+    const alvo = new Date(String(iso).slice(0, 10) + "T00:00:00Z");
+    return Math.round((alvo - hoje) / 86400000);
+}
+
+function abrirRenovacao() {
+    const bloco = document.getElementById("bloco-renovar");
+    const botao = document.getElementById("botao-renovar");
+
+    if (!bloco.hidden) {
+        bloco.hidden = true;
+        bloco.innerHTML = "";
+        botao.textContent = "Renovar agora";
+        return;
+    }
+
+    botao.textContent = "Fechar";
+
+    desenharPagamento(bloco, {
+        titulo: "Renovar a assinatura",
+        explica: "O prazo novo começa quando o atual termina: renovar adiantado não perde nenhum dia.",
+        aoPagar: async ({ vencimento }) => {
+            const { data } = await conectar()
+                .from("revendas")
+                .select("plano, assinatura_status, assinatura_vencimento")
+                .eq("id", revenda.id)
+                .single();
+
+            if (data) Object.assign(revenda, data);
+            else if (vencimento) revenda.assinatura_vencimento = vencimento;
+
+            desenharAssinatura();
+            botao.textContent = "Renovar agora";
+        }
+    });
+
+    bloco.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 
@@ -857,5 +912,6 @@ document.addEventListener("change", (evento) => {
     }
 
     desenharAssinatura();
+    document.getElementById("botao-renovar").addEventListener("click", abrirRenovacao);
     abrirAba("precos");
 })();

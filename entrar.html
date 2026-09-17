@@ -57,9 +57,9 @@
                 <button type="submit" class="botao" id="botao-entrar">Entrar</button>
             </form>
 
-            <!-- Quem se cadastrou e ainda não pagou bate aqui todo dia
-                 para ver se abriu. Sem este bloco ele lê "falta o
-                 pagamento" e não tem por onde pagar. -->
+            <!-- Quem se cadastrou e ainda não pagou, ou deixou vencer,
+                 chega aqui. Sem este bloco ele lê "falta o pagamento" e
+                 não tem por onde pagar. -->
             <div id="bloco-pagar" hidden></div>
 
             <p class="rodape-form">
@@ -90,9 +90,8 @@
     <script src="js/utils.js"></script>
     <script src="js/banco.js"></script>
     <script src="js/auth.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
     <script src="js/planos.js"></script>
-    <script src="js/pix.js"></script>
+    <script src="js/pagamento.js"></script>
 
     <script>
         const recado = document.getElementById("recado");
@@ -118,12 +117,42 @@
             });
         });
 
-        // Quem já está logado não precisa ver esta tela de novo.
+        /** O que mostrar a quem não pode abrir o painel. */
+        function mostrarSituacao(r) {
+            avisar(r.mensagem, "erro");
+
+            const bloco = document.getElementById("bloco-pagar");
+
+            if (r.podePagar) {
+                // Pagou: a revenda está liberada, e o painel já abre.
+                desenharPagamento(bloco, {
+                    titulo: "Pagar a assinatura",
+                    aoPagar: () => setTimeout(() => { location.href = ONDE_EDITAR; }, 2500)
+                });
+                document.getElementById("form-entrar").hidden = true;
+            } else if (r.bloqueada) {
+                desenharBloqueio(bloco, r.revenda);
+            }
+        }
+
+        // Quem já está logado não precisa digitar a senha de novo: vai
+        // para o painel, ou direto para o pagamento.
         (async () => {
             const banco = conectar();
             if (!banco) return;
+
             const { data } = await banco.auth.getSession();
-            if (data.session && !motivo) location.href = ONDE_EDITAR;
+            if (!data.session) return;
+
+            const situacao = await situacaoDaConta(data.session.user.id);
+
+            if (situacao.ok) {
+                location.href = ONDE_EDITAR;
+            } else if (situacao.podePagar) {
+                mostrarSituacao(situacao);
+            } else {
+                await banco.auth.signOut();
+            }
         })();
 
         document.getElementById("form-entrar").addEventListener("submit", async (evento) => {
@@ -144,13 +173,8 @@
                 return;
             }
 
-            avisar(r.mensagem, "erro");
-
-            // Quem ainda não pagou, ou deixou vencer, recebe aqui mesmo o
-            // Pix para pagar e o botão do comprovante.
-            if (r.revenda && (r.aguardandoPagamento || r.suspensa)) {
-                desenharPagamento(document.getElementById("bloco-pagar"), r.revenda);
-            }
+            // Quem ainda não pagou, ou deixou vencer, paga aqui mesmo.
+            mostrarSituacao(r);
 
             botao.disabled = false;
             botao.textContent = "Entrar";

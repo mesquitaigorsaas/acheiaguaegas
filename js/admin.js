@@ -28,6 +28,7 @@ const PLANOS_ADMIN = {
 const SITUACOES = {
     aguardando_pagamento: { nome: "Aguardando pagamento", curto: "Aguardando" },
     ativa:                { nome: "Ativa", curto: "Ativas" },
+    vencida:              { nome: "Vencida", curto: "Vencidas" },
     suspensa:             { nome: "Bloqueada", curto: "Bloqueadas" },
     cancelada:            { nome: "Cancelada", curto: "Canceladas" }
 };

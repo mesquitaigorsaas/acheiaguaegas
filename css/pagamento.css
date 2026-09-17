@@ -71,9 +71,9 @@
     padding: 6px;
     background: #fff;
     border-radius: var(--raio);
+    display: block;
+    height: auto;
 }
-
-.qr-pix svg { display: block; width: 100%; height: auto; }
 
 .valor-pix {
     margin-bottom: 14px;
@@ -105,15 +105,6 @@
     color: var(--tinta);
 }
 
-.chave-pix {
-    margin-bottom: 16px;
-    font-size: 13.5px;
-    color: var(--tinta-fraca);
-    overflow-wrap: anywhere;
-}
-
-.chave-pix code { font-size: 13px; color: var(--tinta); }
-
 .pagar .botao-zap {
     display: flex;
     align-items: center;
@@ -122,9 +113,60 @@
     text-decoration: none;
 }
 
-.dica-pagar {
-    margin-top: 8px;
-    font-size: 13px;
+.pagar .recado { margin-bottom: 12px; }
+
+.pagar [data-gerar],
+.resultado-pix [data-trocar] {
+    width: 100%;
+    min-height: 48px;
+}
+
+.resultado-pix [data-trocar] { margin-top: 12px; }
+
+.resultado-pix .explica { text-align: center; }
+
+.esperando {
+    margin-top: 4px;
+    font-size: 13.5px;
     color: var(--tinta-fraca);
     text-align: center;
+}
+
+.resultado-aprovado,
+.resultado-analise {
+    padding: 16px;
+    border-radius: var(--raio);
+}
+
+.resultado-aprovado {
+    background: var(--verde-claro);
+    border: 1.5px solid #9fdcb8;
+}
+
+.resultado-analise {
+    background: var(--gas-clara);
+    border: 1.5px solid #f6d3a8;
+}
+
+.resultado-aprovado strong,
+.resultado-analise strong {
+    display: block;
+    margin-bottom: 4px;
+    font-family: var(--titulo);
+    font-size: 16px;
+}
+
+.resultado-aprovado strong { color: var(--verde); }
+.resultado-analise strong { color: var(--marinho); }
+
+.resultado-aprovado p,
+.resultado-analise p { font-size: 14.5px; color: var(--tinta); }
+
+.resultado-aprovado .botao {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    margin-top: 12px;
+    text-decoration: none;
 }

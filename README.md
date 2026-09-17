@@ -38,9 +38,9 @@ que escolhe por ele. Disso vêm três coisas que lá não existiam:
 | Pedido com água e gás juntos | pronto |
 | Entrega ou retirada | pronto |
 | Cadastro da revenda | pronto e testado |
-| Painel da revenda | **não começou** |
-| Cobrança da assinatura | **não começou** |
-| Site publicado | **não começou** |
+| Painel da revenda | pronto |
+| Cobrança da assinatura | Pix pelo Mercado Pago, liberação automática |
+| Vencimento | tira do ar sozinho, todo dia às 00:05 |
 
 O projeto no Supabase é `mqrcvemdhlyjufvwhvke`.
 
@@ -82,14 +82,23 @@ No SQL Editor, nesta ordem:
    próprias, e os dois na lista do administrador. **Rode antes de publicar a
    função de cadastro nova**: ela grava as duas colunas, e sem elas todo
    cadastro falha.
+8. `supabase/008-p20-p90.sql`, `009-admin-completo.sql` e `010-extras.sql`,
+   nesta ordem.
+9. `supabase/011-pagamento-automatico.sql` — a tabela de pagamentos, a
+   trava que impede o dono de mexer na própria assinatura, a situação
+   "vencida" e o agendamento que tira do ar quem venceu.
 
-Depois, a função de cadastro:
+Depois, as três funções:
 
 ```bash
 npx supabase functions deploy cadastro-revenda --project-ref mqrcvemdhlyjufvwhvke --no-verify-jwt --use-api
+npx supabase functions deploy pagar-assinatura --project-ref mqrcvemdhlyjufvwhvke --no-verify-jwt --use-api
+npx supabase functions deploy webhook-mercadopago --project-ref mqrcvemdhlyjufvwhvke --no-verify-jwt --use-api
 ```
 
-O `--no-verify-jwt` é obrigatório: quem chama é visitante sem conta.
+O `--no-verify-jwt` é obrigatório nas três. A de cadastro é chamada por
+visitante sem conta; a de aviso, pelo Mercado Pago; a de pagar confere a
+sessão por dentro.
 
 Para rodar um arquivo inteiro sem abrir o painel:
 
@@ -98,6 +107,61 @@ npx supabase db query --linked --project-ref mqrcvemdhlyjufvwhvke -f supabase/sc
 ```
 
 O `--linked` é obrigatório junto do `--project-ref`; sozinho, ele é recusado.
+
+---
+
+## A cobrança da assinatura
+
+Dois planos: **mensal, R$ 9,90** (vale 1 mês) e **anual, R$ 99,00** (vale
+12 meses). A revenda paga por Pix, sem sair do site e sem mandar
+comprovante, em três lugares: no fim do cadastro, no login de quem não pagou ou deixou vencer,
+e no botão **Renovar agora** do painel.
+
+```
+pagar-assinatura            →  cria o Pix no Mercado Pago e devolve o QR Code
+webhook-mercadopago         →  o Pix caiu: consulta o Mercado Pago e libera
+creditar_pagamento()        →  única porta que estende o vencimento
+vencer_assinaturas()        →  todo dia às 00:05, tira do ar quem venceu
+```
+
+O valor cobrado mora na função `pagar-assinatura`, e não na tela. Mudou o
+preço? Mude lá **e** em `js/planos.js`, que só desenha os botões.
+
+Cada QR Code é uma cobrança própria, amarrada à revenda e ao plano. Por isso
+não existe comprovante: o Mercado Pago diz quem pagou.
+
+Cartão ficou de fora de propósito. O modo de teste do Mercado Pago para
+cartão exige contas de teste separadas, e o Pix resolve o que o dono de
+revenda usa no dia a dia.
+
+Renovar adiantado não perde dia: o prazo novo conta do vencimento atual.
+
+Revenda **bloqueada** ou **cancelada** pelo administrador não consegue pagar:
+a tela manda falar no WhatsApp. Pagar não desfaz a decisão do administrador.
+
+Estorno e contestação ficam gravados na tabela `pagamentos`, mas não tiram a
+revenda do ar sozinhos. Quem decide é o administrador.
+
+### Ligar o Mercado Pago
+
+1. No [painel de desenvolvedor](https://www.mercadopago.com.br/developers/panel/app),
+   abra a aplicação do Achei Água & Gás (Checkout Transparente).
+2. Em **Credenciais de produção**, copie o **Access Token** e grave nos
+   segredos das funções. Ele é secreto: cobra em nome da conta. Nunca em
+   arquivo, nunca em mensagem. O jeito mais seguro é pelo painel do
+   Supabase, em **Edge Functions → Secrets**, com o nome
+   `MERCADOPAGO_ACCESS_TOKEN`.
+3. Em **Webhooks → Configurar notificações**, modo de produção:
+   - URL: `https://mqrcvemdhlyjufvwhvke.supabase.co/functions/v1/webhook-mercadopago`
+   - Evento: **Pagamentos**
+
+   Ao salvar, o Mercado Pago mostra a **assinatura secreta**. Grave nos
+   mesmos segredos com o nome `MERCADOPAGO_WEBHOOK_SECRET`.
+4. Teste com um Pix de verdade, pago pelo app de **outro banco** (o Mercado
+   Pago recusa a conta pagar para ela mesma). O dinheiro cai na própria
+   conta, menos a tarifa do Pix.
+
+A conta do Mercado Pago precisa ter chave Pix cadastrada.
 
 ---
 
@@ -167,9 +231,14 @@ de trinta campos o dono desiste no meio.
 ```
 index.html              a busca do cliente
 anunciar.html           o cadastro da revenda
+entrar.html             o login, e o pagamento de quem não pagou
+painel.html             o painel da revenda
+admin.html              o painel do administrador
 
 js/busca.js             os três passos da busca
 js/anunciar.js          o cadastro, com CNPJ e endereço conferidos
+js/planos.js            os dois planos e o WhatsApp do suporte
+js/pagamento.js         a caixa de pagamento por Pix
 js/banco.js             de onde vêm os dados, e o modo demonstração
 js/estados.js           os 27 estados, para os selects de endereço
 js/desenhos.js          o desenho de cada botijão e galão de água, com o nome dentro
@@ -179,6 +248,7 @@ js/cnpj.js              o dígito verificador
 js/utils.js             dinheiro, escape, WhatsApp, aberto agora
 
 data/demo.json          seis revendas de mentira, para rodar sem banco
-supabase/               estrutura, segurança, catálogo e a função de cadastro
+supabase/               estrutura, segurança, catálogo e as funções de
+                        cadastro, cobrança e aviso de pagamento
 assets/marca/           a nossa logo, longe das logos das revendas
 ```

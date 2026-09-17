@@ -36,6 +36,7 @@ body.tela-painel { background: var(--fundo); }
 
 .cartao-no-ar.sim { border-color: #9fdcb8; background: var(--verde-claro); }
 .cartao-no-ar.nao { border-color: #f6c9c5; background: var(--vermelho-claro); }
+.cartao-no-ar.perto { border-color: #f6d3a8; background: var(--gas-clara); }
 
 .cartao-no-ar > div { flex: 1 1 240px; min-width: 0; }
 
@@ -47,6 +48,9 @@ body.tela-painel { background: var(--fundo); }
 
 .cartao-no-ar.sim strong { color: var(--verde); }
 .cartao-no-ar.nao strong { color: var(--vermelho); }
+.cartao-no-ar.perto strong { color: var(--marinho); }
+
+#bloco-renovar .pagar { margin: 0 0 16px; }
 
 .cartao-no-ar span {
     display: block;
