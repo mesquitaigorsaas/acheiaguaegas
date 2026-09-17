@@ -150,7 +150,9 @@ function lerCampos() {
 
     const a = (estado.aqui && estado.aqui.campos) || {};
     return {
-        rua: a.rua || "",
+        // A rua escrita pela pessoa vale mais que a do mapa: na esquina,
+        // o mapa pega a do lado.
+        rua: valorDe("rua-aqui") || a.rua || "",
         numero: valorDe("numero-aqui"),
         complemento: valorDe("complemento-aqui"),
         bairro: a.bairro || "",
@@ -200,9 +202,13 @@ async function localizar() {
 
     estado.aqui = { lat: posicao.lat, lng: posicao.lng, precisao: posicao.precisao, campos };
 
-    // O número e a observação da última vez, se a rua for a mesma.
+    if (campos) document.getElementById("rua-aqui").value = campos.rua;
+
+    // A rua corrigida, o número e a observação da última vez, se o mapa
+    // achou a mesma rua de antes.
     const guardado = lembrar(GUARDADO_AQUI);
     if (campos && guardado && guardado.rua === campos.rua) {
+        document.getElementById("rua-aqui").value = guardado.ruaEscrita || campos.rua;
         document.getElementById("numero-aqui").value = guardado.numero || "";
         document.getElementById("complemento-aqui").value = guardado.complemento || "";
     }
@@ -241,7 +247,7 @@ function usarAqui() {
             + kmEscrito(estado.aqui.precisao / 1000) + ". Confira a rua abaixo; "
             + "se não for a sua, entregue em outro endereço.";
     } else {
-        explica.textContent = "Confira a rua e complete com o número.";
+        explica.textContent = "Confira o nome da rua e complete com o número.";
     }
 
     definirOnde({
@@ -422,7 +428,9 @@ function definirOnde(onde) {
     estado.onde = onde;
 
     const resumo = document.getElementById("resumo-onde");
-    const rotulo = onde.como === "aparelho" ? "Você está em" : "Entregar em";
+    // "O mapa achou", e não "você está em": é o palpite do GPS, e a rua
+    // pode ser corrigida logo abaixo.
+    const rotulo = onde.como === "aparelho" ? "O mapa achou você em" : "Entregar em";
     resumo.innerHTML = esc(rotulo) + "<small>" + esc(onde.escrito) + "</small>";
     resumo.hidden = false;
 
@@ -1106,12 +1114,17 @@ function faltaNoEndereco() {
             };
         }
 
-        if (!valorDe("numero-aqui")) {
-            document.getElementById("numero-aqui").classList.add("faltando");
+        const faltam = [
+            { id: "rua-aqui", nome: "a rua" },
+            { id: "numero-aqui", nome: "o número" }
+        ].filter((c) => !valorDe(c.id));
+        faltam.forEach((c) => document.getElementById(c.id).classList.add("faltando"));
+
+        if (faltam.length) {
             return {
                 aviso: "aviso-endereco",
-                alvo: "numero-aqui",
-                texto: "Para a entrega, falta o número."
+                alvo: faltam[0].id,
+                texto: "Para a entrega, falta " + emLista(faltam.map((c) => c.nome)) + "."
             };
         }
 
@@ -1189,6 +1202,7 @@ function completarZap(evento, link) {
     if (!estado.usandoOutro && estado.aqui && estado.aqui.campos) {
         guardar(GUARDADO_AQUI, {
             rua: estado.aqui.campos.rua,
+            ruaEscrita: valorDe("rua-aqui"),
             numero: valorDe("numero-aqui"),
             complemento: valorDe("complemento-aqui")
         });
