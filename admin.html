@@ -20,7 +20,14 @@
            largo e nada de tabela que role para o lado. No computador
            ela só ganha margem. */
 
+        /* O display dos botões ganharia do atributo hidden sem esta
+           linha, e o "Sair" aparecia para quem nem entrou. */
+        [hidden] { display: none !important; }
+
         .admin-limite { max-width: 680px; margin: 0 auto; padding: 16px; }
+
+        .admin-botoes-topo { display: flex; gap: 8px; flex: none; }
+        .admin-botoes-topo .botao-vazio { width: auto; }
 
         .admin-topo {
             display: flex;
@@ -186,7 +193,10 @@
 
         <div class="admin-topo">
             <h1>Painel do administrador</h1>
-            <button type="button" class="botao-vazio botao-miudo" id="botao-sair" hidden>Sair</button>
+            <div class="admin-botoes-topo">
+                <a class="botao-vazio botao-miudo" href="./">Voltar ao site</a>
+                <button type="button" class="botao-vazio botao-miudo" id="botao-sair" hidden>Sair</button>
+            </div>
         </div>
         <p class="admin-conta" id="quem-sou"></p>
 

@@ -614,6 +614,18 @@
 
 .rodape a { color: #fff; }
 
+/* A porta do administrador: pequena e apagada, para o cliente nem
+   reparar nela. Quem não é administrador não passa do login. */
+.rodape .link-admin {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, .35);
+    text-decoration: none;
+}
+
+.rodape .link-admin:hover { color: rgba(255, 255, 255, .7); }
+
 
 @media (max-width: 480px) {
     .revenda {
