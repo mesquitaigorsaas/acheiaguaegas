@@ -882,10 +882,21 @@ function cartao(r, pedidos, menorTotal) {
         // Sem logo, a lojinha do CSS: a mesma de quando a revenda se cadastra.
         : `<div class="logo logo-vazia" aria-hidden="true"></div>`;
 
-    // Com um item só, um de cada e sem taxa, o detalhamento repetiria o
-    // total logo ao lado. Com quantidade ou com taxa, ele mostra de onde
-    // veio a soma.
-    const detalhe = !umSo || taxa > 0
+    // O que a pessoa marcou além do pedido, um por linha: "consultar" se
+    // esta revenda vende, "Em falta" se não. A revenda continua na lista
+    // do mesmo jeito — o foco é o gás e a água, e ninguém some por não
+    // ter carvão.
+    const vende = new Set(r.extras || []);
+    const linhasExtras = EXTRAS.filter((e) => estado.extras.includes(e.id)).map((e) =>
+        vende.has(e.id)
+            ? `<li class="extra">${esc(e.nome)}${seloMaiores(e)}<span>consultar</span></li>`
+            : `<li class="falta"><s>${esc(e.nome)}</s><span>Em falta</span></li>`
+    ).join("");
+
+    // Com um item só, um de cada, sem taxa e sem extra marcado, o
+    // detalhamento repetiria o total logo ao lado. Com quantidade, taxa
+    // ou extra, ele mostra de onde veio a soma e o que mais tem.
+    const detalhe = !umSo || taxa > 0 || linhasExtras
         ? `<ul class="detalhe-itens">` + estado.pedido.map((i) => {
             const p = r.precos ? r.precos[i.id] : undefined;
             const nome = (qtdDe(i) > 1 ? qtdDe(i) + "× " : "") + (i.apelido || i.nome);
@@ -897,6 +908,7 @@ function cartao(r, pedidos, menorTotal) {
                 : `<li>${esc(nome)}<span>${esc(dinheiro(Number(p) * qtdDe(i)))}</span></li>`;
           }).join("")
           + (taxa > 0 ? `<li>Taxa de entrega<span>${esc(dinheiro(taxa))}</span></li>` : "")
+          + linhasExtras
           + `</ul>`
         : "";
 
@@ -1041,20 +1053,18 @@ function ligarExemplos() {
 
 /**
  * "Também vende: carvão · gelo", preço a consultar. O que a pessoa
- * marcou para perguntar vem destacado, e primeiro: é o que ela procura
- * neste cartão.
+ * marcou fica de fora daqui: já aparece no detalhamento do cartão, com
+ * "consultar" ou "Em falta". Aqui vai o resto, para ela descobrir.
  */
 function tambemVende(r) {
-    const vende = extrasDe(r.extras);
-    if (!vende.length) return "";
-
     const quer = new Set(estado.extras);
-    const emOrdem = [...vende.filter((e) => quer.has(e.id)), ...vende.filter((e) => !quer.has(e.id))];
+    const resto = extrasDe(r.extras).filter((e) => !quer.has(e.id));
+    if (!resto.length) return "";
 
     return `
         <p class="tambem-vende">
             <span>Também vende</span>
-            ${emOrdem.map((e) => `<em class="${quer.has(e.id) ? "quer" : ""}">${esc(e.curto)}${seloMaiores(e)}</em>`).join("")}
+            ${resto.map((e) => `<em>${esc(e.curto)}${seloMaiores(e)}</em>`).join("")}
             <small>preço a consultar</small>
         </p>`;
 }

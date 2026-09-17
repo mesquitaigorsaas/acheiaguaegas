@@ -848,6 +848,9 @@
    no <li> inteiro ele passaria também por cima do "Em falta". */
 .detalhe-itens li.falta s { opacity: .65; }
 .detalhe-itens li.falta span { font-weight: 700; color: var(--vermelho); }
+
+/* O extra que a revenda tem: sem preço, e o "consultar" diz isso. */
+.detalhe-itens li.extra span { font-weight: 600; color: var(--verde); }
 .selo.nao-aceita { background: var(--vermelho-claro); color: var(--vermelho); }
 .selo.entrega-gratis { background: var(--verde-claro); color: var(--verde); }
 .selo.taxa { background: var(--fundo); color: var(--tinta); }
