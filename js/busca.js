@@ -952,6 +952,93 @@ function cartao(r, pedidos, menorTotal) {
 }
 
 
+/* ------------------------------------------
+   Os exemplos da entrada
+------------------------------------------ */
+
+/*
+   Três revendas inventadas, para quem acabou de chegar entender a lista
+   antes de marcar qualquer coisa. Nomes genéricos, sem imitar empresa
+   nenhuma, e sem WhatsApp. Mostram as situações que a lista de verdade
+   tem: a mais barata, a que cobra entrega, a que está fechada e só
+   atende no balcão, e o "também vende".
+*/
+const EXEMPLOS = [
+    {
+        nome: "Gás e Água do Bairro",
+        selos: [["aberta", "Aberta agora"], ["mais-barata", "Mais barata"], ["entrega-gratis", "Entrega grátis"]],
+        km: 0.8,
+        preco: 105,
+        rotulo: "Botijão P13",
+        endereco: "Rua das Flores, 120 — Centro",
+        extras: ["mangueira_gas", "registro_gas"],
+        melhor: true
+    },
+    {
+        nome: "Distribuidora Boa Vista",
+        selos: [["aberta", "Aberta agora"], ["taxa", "Entrega R$ 5,00"]],
+        km: 1.9,
+        preco: 115,
+        rotulo: "total com entrega",
+        endereco: "Av. Brasil, 845 — Boa Vista",
+        extras: ["carvao", "gelo", "cerveja"]
+    },
+    {
+        nome: "Águas do Vale",
+        selos: [["fechada", "Fechada"], ["so-balcao", "Só no balcão"]],
+        km: 3.4,
+        preco: 108,
+        rotulo: "Botijão P13",
+        endereco: "Rua São João, 57 — Vila Nova",
+        extras: ["suporte_galao", "bomba_galao"],
+        fechada: true
+    }
+];
+
+function desenharExemplos() {
+    document.getElementById("lista-exemplos").innerHTML = EXEMPLOS.map((e) => `
+        <article class="revenda exemplo${e.melhor ? " melhor" : ""}${e.fechada ? " fechada" : ""}" aria-label="Exemplo: ${esc(e.nome)}">
+            <div class="logo logo-vazia" aria-hidden="true"></div>
+
+            <div class="miolo">
+                <h3><span class="selo-exemplo">Exemplo</span> ${esc(e.nome)}</h3>
+                <div class="linha-selos">
+                    ${e.selos.map(([classe, texto]) => `<span class="selo ${classe}">${esc(texto)}</span>`).join("")}
+                    <span>${esc(kmEscrito(e.km))}</span>
+                </div>
+            </div>
+
+            <div class="preco">
+                ${esc(dinheiro(e.preco))}
+                <small>${esc(e.rotulo)}</small>
+            </div>
+
+            <p class="endereco-revenda"><span>Endereço:</span> ${esc(e.endereco)}</p>
+
+            ${tambemVende({ extras: e.extras })}
+
+            <div class="acao-revenda">
+                <span class="botao botao-exemplo" aria-disabled="true">Pedir no WhatsApp · exemplo</span>
+            </div>
+        </article>`).join("");
+}
+
+/**
+ * Os exemplos saem quando a lista de verdade entra, e voltam quando ela
+ * sai. Vigiando o próprio atributo da lista, e não cada lugar que a
+ * mostra ou esconde: são cinco, e esquecer um deixaria os dois juntos.
+ */
+function ligarExemplos() {
+    const resultados = document.getElementById("resultados");
+    const exemplos = document.getElementById("exemplos");
+    const acertar = () => { exemplos.hidden = !resultados.hidden; };
+
+    new MutationObserver(acertar).observe(resultados, { attributes: true, attributeFilter: ["hidden"] });
+    desenharExemplos();
+    acertar();
+}
+
+
 /**
  * "Também vende: carvão · gelo", preço a consultar. O que a pessoa
  * marcou para perguntar vem destacado, e primeiro: é o que ela procura
@@ -1169,6 +1256,7 @@ function lerTroco() {
 (async function iniciar() {
     opcoesDeEstado(document.getElementById("uf"), "", true);
     desenharExtrasDoPedido();
+    ligarExemplos();
 
     document.getElementById("form-endereco").addEventListener("submit", usarEndereco);
     document.getElementById("rua").addEventListener("input", aoDigitarRua);

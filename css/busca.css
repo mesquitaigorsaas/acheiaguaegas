@@ -416,6 +416,41 @@
     color: var(--tinta-fraca);
 }
 
+/* OS EXEMPLOS DA ENTRADA — iguais aos de verdade, com o selo e sem
+   o botão funcionando, para ninguém confundir. */
+.explica-exemplos {
+    margin: -4px 0 12px;
+    font-size: 14px;
+    color: var(--tinta-fraca);
+}
+
+.selo-exemplo {
+    display: inline-block;
+    margin-right: 4px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: var(--gas);
+    color: #fff;
+    font-family: var(--fonte);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .4px;
+    text-transform: uppercase;
+    vertical-align: 2px;
+}
+
+.revenda.exemplo { border-style: dashed; }
+
+.botao-exemplo {
+    background: var(--fundo);
+    color: var(--tinta-fraca);
+    border: 1.5px dashed var(--linha);
+    cursor: default;
+    min-height: 46px;
+}
+
+.botao.botao-exemplo:hover:not(:disabled) { background: var(--fundo); }
+
 /* PRECISA DE MAIS ALGUMA COISA? Fechado de início, e discreto: é o
    extra, e não pode disputar com o botijão. */
 .extras-pedido {
